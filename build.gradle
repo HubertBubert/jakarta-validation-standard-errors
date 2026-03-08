@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+}
+
+group = 'online.itlab.springframework'
+version = '0.1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // testing environment
+    testImplementation 'org.springframework:spring-webmvc:7.0.5'
+    testImplementation 'org.springframework:spring-test:7.0.5'
+    testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
+
+    // testing tools
+    testImplementation platform('org.junit:junit-bom:6.0.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+    testImplementation 'org.mockito:mockito-core:5.22.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.22.0'
+}
+
+test {
+    useJUnitPlatform()
+}
