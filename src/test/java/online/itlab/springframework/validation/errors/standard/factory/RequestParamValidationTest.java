@@ -1,6 +1,7 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
@@ -17,8 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -220,6 +224,82 @@ public class RequestParamValidationTest {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource("multiValueParamProvider")
+    public void multiValueParamIncorrect(final List<String> nameParameters,
+                                         final String expectedName,
+                                         final Object expectedRejectedValue,
+                                         final String expectedMessage) {
+
+        var queryParams = nameParameters.stream()
+            .map(v -> "name=" + v)
+            .collect(Collectors.joining("&", "?", ""));
+
+        var url = "/test/multiple" + queryParams;
+        client.get()
+            .uri(url)
+            .exchange();
+
+        var exception = controllerAdvice.getHandlerMethodValidationException();
+        assertNotNull(exception);
+
+        // when:
+        var problemDetail = testedProblemFactory.getValidationError(exception);
+
+        // then:
+        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
+        assertEquals("Request Validation Failed", problemDetail.getTitle());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+
+        final Map<String, Object> errorDetailsMap = new HashMap<>();
+        errorDetailsMap.put("in", "query");
+        errorDetailsMap.put("name", "name");
+        errorDetailsMap.put("path", expectedName);
+        errorDetailsMap.put("rejectedValue", expectedRejectedValue);
+        errorDetailsMap.put("message", expectedMessage);
+
+        Map<String, List<Map<String, Object>>> expected =
+            Map.of(
+                "errors",
+                List.of(
+                    errorDetailsMap
+                )
+            );
+
+        assertEquals(expected, problemDetail.getProperties());
+    }
+
+    static Stream<Arguments> multiValueParamProvider() {
+        return Stream.of(
+            arguments(
+                List.of("o", "two", "three"),
+                "name[0]",
+                "o",
+                "size must be between 2 and 16"
+            ),
+            arguments(
+                List.of("one", "t", "three"),
+                "name[1]",
+                "t",
+                "size must be between 2 and 16"
+            ),
+            arguments(
+                List.of("one", "two", "t"),
+                "name[2]",
+                "t",
+                "size must be between 2 and 16"
+            ),
+            arguments(
+                Collections.emptyList(),
+                "name",
+                null,
+                "must not be empty"
+            )
+        );
+    }
+
+
     @RestController
     @RequestMapping("/test")
     class TestRequestParamController {
@@ -240,6 +320,11 @@ public class RequestParamValidationTest {
         String getNoName(final @RequestParam @NotBlank @Size(min = 1, max = 100) String name,
                          final @RequestParam @Positive int page) {
             return "%s-%s".formatted(name, page);
+        }
+
+        @GetMapping("/multiple")
+        String getMultipleRequestParams(final @RequestParam(required = false) @NotEmpty List<@Size(min=2, max=16) String> name) {
+            return "ok";
         }
     }
 }
