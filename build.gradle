@@ -1,28 +1,48 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'maven-publish'
 }
 
 group = 'online.itlab.springframework'
 version = '0.1.0-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    // testing environment
-    testImplementation 'org.springframework:spring-webmvc:7.0.5'
-    testImplementation 'org.springframework:spring-test:7.0.5'
-    testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
-
-    // testing tools
-    testImplementation platform('org.junit:junit-bom:6.0.3')
-    testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+    // spring boot version as this is the target environment for this library
+    implementation 'org.springframework.boot:spring-boot-starter-web:4.0.3'
+    implementation 'org.springframework.boot:spring-boot-starter-validation:4.0.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test:4.0.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:4.0.3'
     testImplementation 'org.assertj:assertj-core:3.27.7'
-    testImplementation 'org.mockito:mockito-core:5.22.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.22.0'
+
+    testCompileOnly("org.projectlombok:lombok:1.18.42")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
 test {
     useJUnitPlatform()
+}
+
+// Spring boot behavior correction
+tasks.named("bootJar") {
+    enabled = false
+}
+
+tasks.named("jar") {
+    enabled = true
+    archiveClassifier = ""      // to avoid the '-plain' suffix
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }

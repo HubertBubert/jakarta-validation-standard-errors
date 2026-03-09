@@ -1,0 +1,315 @@
+package online.itlab.springframework.validation.errors.standard.factory;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.MatrixVariable;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+
+public class MatrixVariableValidationTest {
+
+    RestTestClient client;
+    CapturingExceptionHandler controllerAdvice;
+
+    IJakartaValidationProblemDetailFactory testedProblemFactory;
+
+    @BeforeEach
+    public void setup() {
+        // client configuration
+        controllerAdvice = new CapturingExceptionHandler();
+        client = RestTestClient
+            .bindToController(new TestMatrixVariableController())
+            .configureServer(mockMvc -> {
+                mockMvc.setControllerAdvice(controllerAdvice);
+            }).build();
+
+        // logic configuration
+        testedProblemFactory = new JakartaValidationProblemDetailFactory();
+    }
+
+    @ParameterizedTest
+    @MethodSource("singleCasesProvider")
+    public void singleMatrixVariableIncorrect(final String baseUrl,
+                                              final String nameParameter,
+                                              final int yearParameter,
+                                              final String expectedName,
+                                              final Object expectedRejectedValue,
+                                              final String expectedMessage) {
+
+        var url = baseUrl + "/id1" + ";name=%s;year=%d".formatted(nameParameter, yearParameter);
+        client.get()
+            .uri(url)
+            .exchange();
+
+        var exception = controllerAdvice.getHandlerMethodValidationException();
+        assertNotNull(exception);
+
+        // when:
+        var problemDetail = testedProblemFactory.getValidationError(exception);
+
+        // then:
+        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
+        assertEquals("Request Validation Failed", problemDetail.getTitle());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+
+        Map<String, List<Map<String, Object>>> expected =
+            Map.of(
+                "errors",
+                List.of(
+                    Map.of(
+                        "in", "matrix",
+                        "name", expectedName,
+                        "path", expectedName,
+                        "rejectedValue", expectedRejectedValue,
+                        "message", expectedMessage
+                    )
+                )
+            );
+
+        assertEquals(expected, problemDetail.getProperties());
+    }
+
+    static Stream<Arguments> singleCasesProvider() {
+        return Stream.of(
+            arguments(
+                "/test/same",
+                "Alice",
+                1800,
+                "year",
+                1800,
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "/test/same",
+                "     ",
+                1990,
+                "name",
+                "     ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed",
+                "Alice",
+                1800,
+                "year",
+                1800,
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "/test/renamed",
+                "     ",
+                1990,
+                "name",
+                "     ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/noname",
+                "Alice",
+                1800,
+                "year",
+                1800,
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "/test/noname",
+                "     ",
+                1990,
+                "name",
+                "     ",
+                "must not be blank"
+            )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("multipleCasesProvider")
+    public void multipleMatrixVariableIncorrect(final String baseUrl,
+                                                final String incorrectNameParameter,
+                                                final int incorrectYearParameter,
+                                                final String expectedNameMessage,
+                                                final String expectedYearMessage) {
+
+        var url = baseUrl + "/id1" + ";name=%s;year=%d".formatted(incorrectNameParameter, incorrectYearParameter);
+        client.get()
+            .uri(url)
+            .exchange();
+
+        var exception = controllerAdvice.getHandlerMethodValidationException();
+        assertNotNull(exception);
+
+        // when:
+        var problemDetail = testedProblemFactory.getValidationError(exception);
+
+        // then:
+        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
+        assertEquals("Request Validation Failed", problemDetail.getTitle());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+
+        List<Map<String, Object>> expectedErrorsList = List.of(
+            Map.of(
+                "in", "matrix",
+                "name", "name",
+                "path", "name",
+                "rejectedValue", incorrectNameParameter,
+                "message", expectedNameMessage
+            ),
+            Map.of(
+                "in", "matrix",
+                "name", "year",
+                "path", "year",
+                "rejectedValue", incorrectYearParameter,
+                "message", expectedYearMessage
+            )
+        );
+
+        assertThat(problemDetail.getProperties()).hasSize(1);
+        assertThat(problemDetail.getProperties()).containsOnlyKeys("errors");
+        var actualErrorsList = (List<Map<String, Object>>) problemDetail.getProperties().get("errors");
+        assertThat(actualErrorsList).containsExactlyInAnyOrderElementsOf(expectedErrorsList);
+    }
+
+    static Stream<Arguments> multipleCasesProvider() {
+        return Stream.of(
+            arguments(
+                "/test/same",
+                "    ",
+                1800,
+                "must not be blank",
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "/test/renamed",
+                "    ",
+                1800,
+                "must not be blank",
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "/test/noname",
+                "    ",
+                1800,
+                "must not be blank",
+                "must be greater than or equal to 1900"
+            )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("nestedCasesProvider")
+    public void nestedMatrixVariableIncorrect(final String nameParameter,
+                                              final int yearParameter,
+                                              final String expectedName,
+                                              final Object expectedRejectedValue,
+                                              final String expectedMessage) {
+
+        var url = "/test/owners/owner1;name=%s/pets/pet1;year=%d".formatted(nameParameter, yearParameter);
+        client.get()
+            .uri(url)
+            .exchange();
+
+        var exception = controllerAdvice.getHandlerMethodValidationException();
+        assertNotNull(exception);
+
+        // when:
+        var problemDetail = testedProblemFactory.getValidationError(exception);
+
+        // then:
+        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
+        assertEquals("Request Validation Failed", problemDetail.getTitle());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+
+        Map<String, List<Map<String, Object>>> expected =
+            Map.of(
+                "errors",
+                List.of(
+                    Map.of(
+                        "in", "matrix",
+                        "name", expectedName,
+                        "path", expectedName,
+                        "rejectedValue", expectedRejectedValue,
+                        "message", expectedMessage
+                    )
+                )
+            );
+
+        assertEquals(expected, problemDetail.getProperties());
+    }
+
+    static Stream<Arguments> nestedCasesProvider() {
+        return Stream.of(
+            arguments(
+                "Alice",
+                1800,
+                "year",
+                1800,
+                "must be greater than or equal to 1900"
+            ),
+            arguments(
+                "     ",
+                1990,
+                "name",
+                "     ",
+                "must not be blank"
+            )
+        );
+    }
+
+    @RestController
+    @RequestMapping("/test")
+    class TestMatrixVariableController {
+
+        @GetMapping("/same/{id}")
+        String getSameName(final @PathVariable String id,
+                           final @MatrixVariable("name") @NotBlank @Size(min = 1, max = 100) String name,
+                           final @MatrixVariable("year") @Min(1900) int year) {
+            return "%s-%s".formatted(name, year);
+        }
+
+        @GetMapping("/renamed/{id}")
+        String getRenamed(final @PathVariable String id,
+                          final @MatrixVariable("name") @NotBlank @Size(min = 1, max = 100) String nameFilter,
+                          final @MatrixVariable("year") @Min(1900) int minYear) {
+            return "%s-%s".formatted(nameFilter, minYear);
+        }
+
+        @GetMapping("/noname/{id}")
+        String getNoName(final @PathVariable String id,
+                         final @MatrixVariable @NotBlank @Size(min = 1, max = 100) String name,
+                         final @MatrixVariable @Min(1900) int year) {
+            return "%s-%s-%s".formatted(id, name, year);
+        }
+
+        // ----- nesting ----------
+        @GetMapping("/owners/{ownerId}/pets/{petId}")
+        String getNested(final @PathVariable String ownerId,
+                         final @PathVariable String petId,
+                         final @MatrixVariable(name="name", pathVar="ownerId") @NotBlank @Size(min = 1, max = 100) String name,
+                         final @MatrixVariable(name="year", pathVar="petId") @Min(1900) int year) {
+            return "%s-%s-%s-%s".formatted(ownerId, name, petId, year);
+        }
+    }
+}
