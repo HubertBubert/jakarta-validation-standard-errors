@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,7 +48,8 @@ public class CookieValueValidationTest {
             }).build();
 
         // logic configuration
-        testedProblemFactory = new JakartaValidationProblemDetailFactory();
+        LibAutoConfiguration autoConfiguration = new LibAutoConfiguration();
+        testedProblemFactory = autoConfiguration.problemDetailFactory();
     }
 
     @ParameterizedTest

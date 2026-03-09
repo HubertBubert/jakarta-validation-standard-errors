@@ -34,8 +34,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
-@Service
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
+
+    private final IReflectionTools reflectionTools;
+
+    public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools) {
+        this.reflectionTools = reflectionTools;
+    }
     /**
      * Creates an RFC 9457 error.
      * This function handles a Spring exception thrown automatically when Controller method fails validation.
@@ -102,7 +107,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         if (failedMethodParameter.hasParameterAnnotation(RequestBody.class)) {
             return new MethodArgumentGenerators(
                 (failedFieldJavaPath) -> "body",
-                (failedFieldJavaPath) -> failedFieldJavaPath
+                (failedFieldJavaPath) -> reflectionTools.toJsonPath(failedMethodParameter.getParameterType(), failedFieldJavaPath)
             );
         } else if (failedMethodParameter.hasParameterAnnotation(ModelAttribute.class)) {
             return new MethodArgumentGenerators(

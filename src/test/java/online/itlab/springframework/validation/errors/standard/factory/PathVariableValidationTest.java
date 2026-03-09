@@ -1,6 +1,7 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
 import jakarta.validation.constraints.Size;
+import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,7 +42,8 @@ public class PathVariableValidationTest {
             }).build();
 
         // logic configuration
-        testedProblemFactory = new JakartaValidationProblemDetailFactory();
+        LibAutoConfiguration autoConfiguration = new LibAutoConfiguration();
+        testedProblemFactory = autoConfiguration.problemDetailFactory();;
     }
 
     @ParameterizedTest

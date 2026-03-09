@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,11 +48,12 @@ public class RequestBodyValidationTest {
             }).build();
 
         // logic configuration
-        testedProblemFactory = new JakartaValidationProblemDetailFactory();
+        LibAutoConfiguration autoConfiguration = new LibAutoConfiguration();
+        testedProblemFactory = autoConfiguration.problemDetailFactory();
     }
 
     @ParameterizedTest
-    @MethodSource({"personCasesProvider", "employeeCasesProvider"})
+    @MethodSource({"singlePersonCasesProvider", "singleEmployeeCasesProvider"})
     public void testGetSpecificBook(final String urlPatter,
                                     final Object body,
                                     final String expectedPath,
@@ -105,100 +107,52 @@ public class RequestBodyValidationTest {
         assertEquals(expected, problemDetail.getProperties());
     }
 
-    @ParameterizedTest
-    @MethodSource("employeeCasesProvider")
-    public void testPostRenamed(final String urlPatter,
-                                    final EmployeeSame employee ,
-                                    final String expectedPath,
-                                    final String expectedRejectedValue,
-                                    final String expectedMessage) {
-        var result = client
-            .post().uri(urlPatter.formatted("renamed"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .body("""
-                {
-                    "pe": {
-                        "fn": "%s",
-                        "ln": "%s",
-                        "h": %d
-                    },
-                    "po": "%s"
-                }
-                """.formatted(
-                    employee.person.firstName,
-                    employee.person.lastName,
-                    employee.person.height,
-                    employee.position
-              ))
-            .exchange()
-            .returnResult();
-
-        var exception = controllerAdvice.getMethodArgumentNotValidException();
-        assertNotNull(exception);
-
-        // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
-
-        // then:
-        assertEquals(
-            URI.create("/problems/validation-failed"),
-            problemDetail.getType()
-        );
-        assertEquals(
-            "Request Validation Failed",
-            problemDetail.getTitle()
-        );
-        assertEquals(
-            HttpStatus.BAD_REQUEST.value(),
-            problemDetail.getStatus()
-        );
-        assertEquals(
-            "Request has one or more validation errors. Please fix them and try again.",
-            problemDetail.getDetail()
-        );
-
-        Map<String, List<Map<String, String>>> expected =
-            Map.of(
-                "errors",
-                List.of(
-                    Map.of(
-                        "in", "body",
-                        "path", expectedPath,
-                        "rejectedValue", expectedRejectedValue,
-                        "message", expectedMessage
-                    )
-                )
-            );
-
-        assertEquals(expected, problemDetail.getProperties());
-    }
-
-    static Stream<Arguments> personCasesProvider() {
+    static Stream<Arguments> singlePersonCasesProvider() {
         return Stream.of(
             arguments(
-                "/test/%s/people",
+                "/test/same/people",
                 new PersonSame("Alice", "Wonderland", -1),
                 "height",
                 "-1",
                 "must be greater than 0"
             ),
             arguments(
-                "/test/%s/people",
+                "/test/renamed/people",
+                new PersonRenamed("Alice", "Wonderland", -1),
+                "h",
+                "-1",
+                "must be greater than 0"
+            ),
+            arguments(
+                "/test/same/people",
                 new PersonSame("Alice", "    ", 160),
                 "lastName",
+                "    ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/people",
+                new PersonRenamed("Alice", "    ", 160),
+                "ln",
                 "    ",
                 "must not be blank"
             )
         );
     }
 
-    static Stream<Arguments> employeeCasesProvider() {
+    static Stream<Arguments> singleEmployeeCasesProvider() {
         return Stream.of(
             arguments(
-                "/test/%s/employees",
+                "/test/same/employees",
                 new EmployeeSame(new PersonSame("   ", "Wonderland", 160), "CEO"),
                 "person.firstName",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/employees",
+                new EmployeeRenamed(new PersonRenamed("   ", "Wonderland", 160), "CEO"),
+                "pe.fn",
                 "   ",
                 "must not be blank"
             )
