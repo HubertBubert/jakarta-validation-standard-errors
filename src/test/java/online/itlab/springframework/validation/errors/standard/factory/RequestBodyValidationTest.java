@@ -68,10 +68,11 @@ public class RequestBodyValidationTest {
             .returnResult();
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(

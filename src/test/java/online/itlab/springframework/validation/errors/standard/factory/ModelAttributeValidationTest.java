@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,10 +76,11 @@ public class ModelAttributeValidationTest {
             .exchange().returnResult();
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -106,7 +108,7 @@ public class ModelAttributeValidationTest {
     static Stream<Arguments> singleCasesProvider() {
         return Stream.of(
             arguments(
-                "/test/same",
+                "/test/noname",
                 "i",
                 "name",
                 "header",
@@ -116,7 +118,7 @@ public class ModelAttributeValidationTest {
                 "size must be between 2 and 5"
             ),
             arguments(
-                "/test/same",
+                "/test/noname",
                 "id",
                 "    ",
                 "header",
@@ -126,7 +128,7 @@ public class ModelAttributeValidationTest {
                 "must not be blank"
             ),
             arguments(
-                "/test/same",
+                "/test/noname",
                 "id",
                 "name",
                 "longHeader",
@@ -136,7 +138,7 @@ public class ModelAttributeValidationTest {
                 "size must be between 1 and 6"
             ),
             arguments(
-                "/test/noname",
+                "/test/renamed",
                 "i",
                 "name",
                 "header",
@@ -146,7 +148,7 @@ public class ModelAttributeValidationTest {
                 "size must be between 2 and 5"
             ),
             arguments(
-                "/test/noname",
+                "/test/renamed",
                 "id",
                 "    ",
                 "header",
@@ -156,7 +158,7 @@ public class ModelAttributeValidationTest {
                 "must not be blank"
             ),
             arguments(
-                "/test/noname",
+                "/test/renamed",
                 "id",
                 "name",
                 "longHeader",
@@ -165,38 +167,6 @@ public class ModelAttributeValidationTest {
                 "longHeader",
                 "size must be between 1 and 6"
             )
-            // ModelAttribute does not support renamed parameters
-//,
-//            arguments(
-//                "/test/renamed",
-//                "i",
-//                "name",
-//                "header",
-//                "path",
-//                "id",
-//                "i",
-//                "size must be between 2 and 5"
-//            ),
-//            arguments(
-//                "/test/renamed",
-//                "id",
-//                "    ",
-//                "header",
-//                "query",
-//                "name",
-//                "    ",
-//                "must not be blank"
-//            ),
-//            arguments(
-//                "/test/renamed",
-//                "id",
-//                "name",
-//                "longHeader",
-//                "header",
-//                "header",
-//                "longHeader",
-//                "size must be between 1 and 6"
-//            )
         );
     }
 
@@ -217,10 +187,11 @@ public class ModelAttributeValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -258,7 +229,7 @@ public class ModelAttributeValidationTest {
     static Stream<Arguments> multipleCasesProvider() {
         return Stream.of(
             arguments(
-                "/test/same",
+                "/test/noname",
                 "i",
                 "    ",
                 "longHeader",
@@ -267,24 +238,14 @@ public class ModelAttributeValidationTest {
                 "size must be between 1 and 6"
             ),
             arguments(
-                "/test/noname",
+                "/test/renamed",
                 "i",
                 "    ",
                 "longHeader",
                 "size must be between 2 and 5",
                 "must not be blank",
                 "size must be between 1 and 6"
-            )//,
-            // ModelAttribute does not support renamed parameters
-//            arguments(
-//                "/test/noname",
-//                "i",
-//                "    ",
-//                "longHeader",
-//                "size must be between 2 and 5",
-//                "must not be blank",
-//                "size must be between 1 and 6"
-//            )
+            )
         );
     }
 
@@ -292,61 +253,40 @@ public class ModelAttributeValidationTest {
     @RequestMapping("/test")
     class TestModelAttributeController {
 
-        @GetMapping("/same/{id}")
-        String getSameName(final @ModelAttribute @Valid Same same) {
-            return "%s-%s-%s".formatted(same.id, same.name, same.header);
-        }
-
         @GetMapping("/noname/{id}")
         String getNoName(final @ModelAttribute @Valid Noname noname) {
             return "%s-%s-%s".formatted(noname.id, noname.name, noname.header);
         }
 
         @GetMapping("/renamed/{id}")
-        String getNoName(final @ModelAttribute @Valid Renamed renamed) {
+        String getRenamed(final @ModelAttribute @Valid Renamed renamed) {
             return "%s-%s-%s".formatted(renamed.identifier, renamed.fullName, renamed.headerValue);
         }
     }
 
-    record Same(
-        @PathVariable("id")
+    record Noname(
         @Size(min = 2, max = 5)
-        String id,
+        String id,                                  // @PathVariable
 
-        @RequestParam("name")
         @NotBlank @Size(min = 1, max = 100)
-        String name,
+        String name,                                // @RequestParam
 
-        @RequestHeader("header")
         @NotBlank @Size(min = 1, max = 6)
-        String header
+        String header                               // @RequestHeader
     ){}
 
     record Renamed(
-        @PathVariable("id")
+        @BindParam("id")
         @Size(min = 2, max = 5)
         String identifier,
 
-        @RequestParam("name")
+        @BindParam("name")
         @NotBlank @Size(min = 1, max = 100)
         String fullName,
 
-        @RequestHeader("header")
+        @BindParam("header")
         @NotBlank @Size(min = 1, max = 6)
         String headerValue
     ){}
 
-    record Noname(
-        @PathVariable
-        @Size(min = 2, max = 5)
-        String id,
-
-        @RequestParam
-        @NotBlank @Size(min = 1, max = 100)
-        String name,
-
-        @RequestHeader
-        @NotBlank @Size(min = 1, max = 6)
-        String header
-    ){}
 }

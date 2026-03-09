@@ -15,6 +15,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class CapturingExceptionHandler extends ResponseEntityExceptionHandler {
 
+    protected WebRequest webRequest;
+
     protected MethodArgumentNotValidException methodArgumentNotValidException;
     protected HandlerMethodValidationException handlerMethodValidationException;
     protected MissingServletRequestPartException missingServletRequestPartException;
@@ -27,8 +29,11 @@ public class CapturingExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers,
         HttpStatusCode status,
         WebRequest request) {
+
+        System.out.println("------------------1111111111111------------------");
+        this.webRequest = request;
         this.methodArgumentNotValidException = exception;
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.badRequest().build();
     }
 
     @Override
@@ -37,8 +42,11 @@ public class CapturingExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers,
         HttpStatusCode status,
         WebRequest request) {
+
+        System.out.println("------------------22222222222------------------");
+        this.webRequest = request;
         this.handlerMethodValidationException = exception;
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.badRequest().build();
     }
 
     @Override
@@ -47,6 +55,9 @@ public class CapturingExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers,
         HttpStatusCode status,
         WebRequest request) {
+
+        System.out.println("------------------33333333333333------------------");
+        this.webRequest = request;
         this.missingServletRequestPartException = exception;
         return ResponseEntity.badRequest().build();
     }

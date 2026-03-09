@@ -1,5 +1,6 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.MethodParameter;
@@ -11,6 +12,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.validation.method.ParameterErrors;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -19,15 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -37,9 +37,12 @@ import java.util.function.Function;
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
 
     private final IReflectionTools reflectionTools;
+    private final IWebRequestTools webRequestTools;
 
-    public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools) {
+    public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools,
+                                                 final IWebRequestTools webRequestTools) {
         this.reflectionTools = reflectionTools;
+        this.webRequestTools = webRequestTools;
     }
     /**
      * Creates an RFC 9457 error.
@@ -49,7 +52,8 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
      * @return
      */
     @Override
-    public ProblemDetail getValidationError(final MethodArgumentNotValidException exception) {
+    public ProblemDetail getValidationError(final MethodArgumentNotValidException exception,
+                                            final WebRequest request) {
         final ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
 
         problem.setType(URI.create("/problems/validation-failed"));
@@ -78,7 +82,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
         final MethodParameter failedMethodParameter = exception.getParameter();
 
-        MethodArgumentGenerators generators = getGenerators(failedMethodParameter);
+        MethodArgumentGenerators generators = getGenerators(failedMethodParameter, request);
 
         List<Map<String, String>> errors = exception.getBindingResult()
             .getFieldErrors()
@@ -103,7 +107,8 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         Function<String, String> path
     ) {}
 
-    private MethodArgumentGenerators getGenerators(final MethodParameter failedMethodParameter) {
+    private MethodArgumentGenerators getGenerators(final MethodParameter failedMethodParameter,
+                                                   final WebRequest request) {
         if (failedMethodParameter.hasParameterAnnotation(RequestBody.class)) {
             return new MethodArgumentGenerators(
                 (failedFieldJavaPath) -> "body",
@@ -111,54 +116,68 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             );
         } else if (failedMethodParameter.hasParameterAnnotation(ModelAttribute.class)) {
             return new MethodArgumentGenerators(
-                (failedFieldJavaPath) -> detectSource(failedMethodParameter.getParameterType(), failedFieldJavaPath),
-                (failedFieldJavaPath) -> failedFieldJavaPath
+                (failedFieldJavaPath) -> detectSource(failedMethodParameter.getParameterType(), request, failedFieldJavaPath),
+                (failedFieldJavaPath) -> getRequestParamName(failedMethodParameter.getParameterType(), failedFieldJavaPath)
             );
         } else {
             return new MethodArgumentGenerators(
-                (failedFieldJavaPath) -> " parameters",
+                (failedFieldJavaPath) -> "parameters",
                 (failedFieldJavaPath) -> failedFieldJavaPath
             );
         }
     }
 
-    private String detectSource(final Class<?> clazz, final String fieldName) {
+    private String detectSource(final Class<?> modelAttributeType, final WebRequest request, final String fieldName) {
         final String unknown = "unknown";
-        if (!clazz.isRecord()) {
+        if (!modelAttributeType.isRecord()) {
             return unknown;    // return generic name - only records are supported currently
         }
 
-        Class<?>[] types = Arrays.stream(clazz.getRecordComponents())
-            .map(RecordComponent::getType)
-            .toArray(Class<?>[]::new);
+        // 1. javaFieldName -> requestName
+        //    We find actual field and examine if it is annotated with @BindParam.
+        //    If it is we used the name from @BindParam, if not javaFieldName
+        // 2. Check request using requestName
 
-        try {
-            Constructor<?> canonical = clazz.getDeclaredConstructor(types);
-            Parameter[] params = canonical.getParameters();
-            RecordComponent[] components = clazz.getRecordComponents();
+//        final String requestName = getRequestParamName(modelAttributeType, fieldName);
 
-            for (int i = 0; i < components.length; i++) {
-                if (!components[i].getName().equals(fieldName)) {       // this won't work for different names annotaiton name != field name
-                    continue;
-                }
-                System.out.println(components[i].getName());
-                Parameter param = params[i];
+        Field field = reflectionTools.findField(modelAttributeType, fieldName);
+        final BindParam bindParam = field.getAnnotation(BindParam.class);
+        final String requestName =  bindParam != null
+            ? bindParam.value()
+            : fieldName;
 
-                if (param.isAnnotationPresent(PathVariable.class)) {
-                    return "path";
-                } else if (param.isAnnotationPresent(RequestParam.class)) {
-                    return "query";
-                } else if (param.isAnnotationPresent(RequestHeader.class)) {
-                    return "header";
-                } else {
-                    return unknown;
-                }
-            }
-        } catch (NoSuchMethodException e) {
-            return unknown;
-        }
-        return unknown;
+        var source =  webRequestTools.resolveSource(request, field, requestName);
+        return source;
     }
+
+//    private String detectRequestSource(final WebRequest request, final String requestName) {
+//
+//    }
+
+    private String getRequestParamName(final Class<?> clazz, final String fieldJavaName) {
+        Field field = reflectionTools.findField(clazz, fieldJavaName);
+        final BindParam bindParam = field.getAnnotation(BindParam.class);
+        return bindParam != null
+            ? bindParam.value()
+            : field.getName();
+    }
+
+//    private Parameter getRecordParameter(final Class<?> recordType, final String parameterName) throws NoSuchMethodException {
+//        if (!recordType.isRecord()) {
+//            throw new IllegalArgumentException("recordType must be record");
+//        }
+//
+//        final Class<?>[] types = Arrays.stream(recordType.getRecordComponents())
+//            .map(RecordComponent::getType)
+//            .toArray(Class<?>[]::new);
+//
+//        Constructor<?> canonical = recordType.getDeclaredConstructor(types);
+//
+//        Arrays.stream(canonical.getParameters())
+//            .filter(parameter -> parameterName.equals(parameter.getName()))
+//            .findFirst()
+//
+//    }
 
     @Override
     public ProblemDetail getValidationError(final HandlerMethodValidationException exception) {

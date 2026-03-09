@@ -32,7 +32,7 @@ public abstract class StandardErrorsExceptionHandler extends ResponseEntityExcep
         final HttpStatusCode status,
         final WebRequest request) {
 
-        final ProblemDetail problem = problemFactory.getValidationError(exception);
+        final ProblemDetail problem = problemFactory.getValidationError(exception, request);
         return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
