@@ -40,6 +40,22 @@ class ReflectionToolsSpec extends Specification {
             'aaa.bbb'          | Employee || "Field 'aaa' not found in ${Employee.name}"
     }
 
+    def 'correctly retrieves Field from record and class'() {
+        when:
+            var field = testedTools.findField(PersonRenamed, fieldName)
+        then:
+            field != null
+            field.getName() == fieldName
+        where:
+            fieldName   | clazz
+            'firstName' | Person
+            'lastName'  | Person
+            'height'    | Person
+            'firstName' | PersonClass
+            'lastName'  | PersonClass
+            'height'    | PersonClass
+    }
+
     @KnownImmutable
     record Person(
         String firstName,
@@ -48,8 +64,8 @@ class ReflectionToolsSpec extends Specification {
     ){}
 
     record Employee(
-            Person person,
-            String position
+        Person person,
+        String position
     ){}
 
     @KnownImmutable
@@ -63,4 +79,10 @@ class ReflectionToolsSpec extends Specification {
         @JsonProperty("pe") PersonRenamed person,
         @JsonProperty("po") String position
     ){}
+
+    class PersonClass {
+        String firstName;
+        String lastName;
+        Integer height;
+    }
 }

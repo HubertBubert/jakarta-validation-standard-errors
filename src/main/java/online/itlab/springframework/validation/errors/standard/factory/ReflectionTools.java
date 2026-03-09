@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
+// NOTE: Spring provides itw own implementation of reflection tools
+//       import org.springframework.util.ReflectionUtils;
+// TODO evaluate Spring implementation and it's usage
 public class ReflectionTools implements IReflectionTools {
 
     public String toJsonPath(final Class<?> rootClass, final String javaPath) {
@@ -29,7 +32,7 @@ public class ReflectionTools implements IReflectionTools {
         return result.toString();
     }
 
-    private static Field findField(final Class<?> type, final String javaName) {
+    public Field findField(final Class<?> type, final String javaName) {
         return Arrays.stream(type.getDeclaredFields())
             .filter(field -> field.getName().equals(javaName))
             .findFirst()
@@ -38,7 +41,7 @@ public class ReflectionTools implements IReflectionTools {
             ));
     }
 
-    private static String getJsonName(final Field field) {
+    private String getJsonName(final Field field) {
         final JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
         return jsonProperty != null
             ? jsonProperty.value()
