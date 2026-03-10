@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Test case which tests which request parts can be mapped to @ModelAttribute.
  * If this test fails it means the changes must be made to @ModelAttribute processing.
  */
-public class ModelAttributeIntegrityCheck {
+public class ModelAttributeSpringBehaviorCheck {
 
     private MockMvc mockMvc;
 
