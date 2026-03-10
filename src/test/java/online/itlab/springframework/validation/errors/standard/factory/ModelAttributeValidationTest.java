@@ -14,10 +14,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -94,7 +91,7 @@ public class ModelAttributeValidationTest {
                 List.of(
                     Map.of(
                         "in", expectedIn,
-//                        "name", expectedName,         // this must be compatible with specific handlers for @PathVariable, @RequestParam
+                        "name", expectedName,
                         "path", expectedName,
                         "rejectedValue", expectedRejectedValue,
                         "message", expectedMessage
@@ -202,18 +199,21 @@ public class ModelAttributeValidationTest {
         final List<Map<String, Object>> expectedErrorsList = List.of(
             Map.of(
                 "in", "path",
+                "name", "id",
                 "path", "id",
                 "rejectedValue", incorrectIdParameter,
                 "message", expectedIdMessage
             ),
             Map.of(
                 "in", "query",
+                "name", "name",
                 "path", "name",
                 "rejectedValue", incorrectNameParameter,
                 "message", expectedNameMessage
             ),
             Map.of(
                 "in", "header",
+                "name", "header",
                 "path", "header",
                 "rejectedValue", incorrectHeaderParameter,
                 "message", expectedHeaderMessage

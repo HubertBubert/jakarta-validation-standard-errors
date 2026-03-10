@@ -84,16 +84,21 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
         MethodArgumentGenerators generators = getGenerators(failedMethodParameter, request);
 
-        List<Map<String, String>> errors = exception.getBindingResult()
+        List<Map<String, Object>> errors = exception.getBindingResult()
             .getFieldErrors()
             .stream()
-            .map(err -> Map.of(
+            .map(err -> {
+                final String jsonPath = generators.path.apply(err.getField());
+                final String jsonName = lastSegment(jsonPath);
+                return Map.of(
                 "in", generators.in.apply(err.getField()),
-                "path", generators.path.apply(err.getField()),
+                "name", jsonName,
+                "path", jsonPath,
                 "message", err.getDefaultMessage(),
-//                "rejectedValue", err.getRejectedValue()
-                "rejectedValue", String.valueOf(err.getRejectedValue())
-            ))
+                "rejectedValue", err.getRejectedValue()
+//                "rejectedValue", String.valueOf(err.getRejectedValue())
+                );
+            })
             .toList();
 
         // RFC 9457 extension members
@@ -316,7 +321,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             path += "[" + r.getContainerKey() + "]";
         }
 
-        Object rejected = r.getArgument();
+        final Object rejected = r.getArgument();
 
         final String finalPath = path;
 
@@ -335,6 +340,16 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         }).toList();
     }
 
+    // more like StringTools
+    public String lastSegment(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        int idx = input.lastIndexOf('.');
+        return idx == -1 ? input : input.substring(idx + 1);
+    }
+
     private List<Map<String, Object>> fromParameterErrors(String in, ParameterErrors pe, Locale locale) {
         List<Map<String, Object>> out = new ArrayList<>();
 
@@ -342,10 +357,21 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 //            String message = messageSource.getMessage(fe, locale);
             String message = fe.getDefaultMessage();
 
+            // it can be path for @RequestBody validation error
+            final String path;
+            if ("body".equals(in)) {
+                final Class<?> parameterType = pe.getMethodParameter().getParameterType();
+                path = reflectionTools.toJsonPath(parameterType, fe.getField().toString());
+            } else {
+                path = fe.getField().toString();
+            }
+//            final String path = fe.getField().toString();
+            final String name = lastSegment(path);
+
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("in", in);
-            m.put("name", fe.getField());            // for body/model attributes, field path is the public name
-            m.put("path", fe.getField());
+            m.put("name", name);            // for body/model attributes, field path is the public name
+            m.put("path", path);
             m.put("rejectedValue", fe.getRejectedValue());
             m.put("message", message);
             out.add(m);

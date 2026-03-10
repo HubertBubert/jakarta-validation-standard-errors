@@ -56,8 +56,9 @@ public class RequestBodyValidationTest {
     @MethodSource({"singlePersonCasesProvider", "singleEmployeeCasesProvider"})
     public void testGetSpecificBook(final String urlPatter,
                                     final Object body,
+                                    final String expectedName,
                                     final String expectedPath,
-                                    final String expectedRejectedValue,
+                                    final Object expectedRejectedValue,
                                     final String expectedMessage) {
         client
             .post().uri(urlPatter.formatted("same"))
@@ -92,12 +93,13 @@ public class RequestBodyValidationTest {
             problemDetail.getDetail()
         );
 
-        Map<String, List<Map<String, String>>> expected =
+        Map<String, List<Map<String, Object>>> expected =
             Map.of(
                 "errors",
                 List.of(
                     Map.of(
                         "in", "body",
+                        "name", expectedName,
                         "path", expectedPath,
                         "rejectedValue", expectedRejectedValue,
                         "message", expectedMessage
@@ -114,19 +116,22 @@ public class RequestBodyValidationTest {
                 "/test/same/people",
                 new PersonSame("Alice", "Wonderland", -1),
                 "height",
-                "-1",
+                "height",
+                -1,
                 "must be greater than 0"
             ),
             arguments(
                 "/test/renamed/people",
                 new PersonRenamed("Alice", "Wonderland", -1),
                 "h",
-                "-1",
+                "h",
+                -1,
                 "must be greater than 0"
             ),
             arguments(
                 "/test/same/people",
                 new PersonSame("Alice", "    ", 160),
+                "lastName",
                 "lastName",
                 "    ",
                 "must not be blank"
@@ -134,6 +139,7 @@ public class RequestBodyValidationTest {
             arguments(
                 "/test/renamed/people",
                 new PersonRenamed("Alice", "    ", 160),
+                "ln",
                 "ln",
                 "    ",
                 "must not be blank"
@@ -146,6 +152,7 @@ public class RequestBodyValidationTest {
             arguments(
                 "/test/same/employees",
                 new EmployeeSame(new PersonSame("   ", "Wonderland", 160), "CEO"),
+                "firstName",
                 "person.firstName",
                 "   ",
                 "must not be blank"
@@ -153,6 +160,7 @@ public class RequestBodyValidationTest {
             arguments(
                 "/test/renamed/employees",
                 new EmployeeRenamed(new PersonRenamed("   ", "Wonderland", 160), "CEO"),
+                "fn",
                 "pe.fn",
                 "   ",
                 "must not be blank"

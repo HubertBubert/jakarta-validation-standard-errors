@@ -23,6 +23,13 @@ public class CapturingExceptionHandler extends ResponseEntityExceptionHandler {
 
     public CapturingExceptionHandler() {super();}
 
+    public void reset() {
+        this.webRequest = null;
+        this.methodArgumentNotValidException = null;
+        this.handlerMethodValidationException = null;
+        this.missingServletRequestPartException = null;
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
         MethodArgumentNotValidException exception,
