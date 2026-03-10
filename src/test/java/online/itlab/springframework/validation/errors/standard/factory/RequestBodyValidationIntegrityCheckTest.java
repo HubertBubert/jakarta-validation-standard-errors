@@ -113,38 +113,38 @@ public class RequestBodyValidationIntegrityCheckTest {
 
     static Stream<Arguments> singleEmployeeCasesProvider() {
         return Stream.of(
-//            arguments(
-//                "/test/%s/same/employees",
-//                new EmployeeSame(new PersonSame("   ", "Wonderland", 160), "CEO")
-//            ),
-//            arguments(
-//                "/test/%s/same/employees",
-//                new EmployeeSame(new PersonSame("Alice", "W", 160), "CEO")
-//            ),
-//            arguments(
-//                "/test/%s/same/employees",
-//                new EmployeeSame(new PersonSame("Alice", "Wonderland", 0), "CEO")
-//            ),
-//            arguments(
-//                "/test/%s/same/employees",
-//                new EmployeeSame(new PersonSame("Alice", "Wonderland", 160), "")
-//            ),
+            arguments(
+                "/test/%s/same/employees",
+                new EmployeeSame(new PersonSame("   ", "Wonderland", 160), "CEO")
+            ),
+            arguments(
+                "/test/%s/same/employees",
+                new EmployeeSame(new PersonSame("Alice", "W", 160), "CEO")
+            ),
+            arguments(
+                "/test/%s/same/employees",
+                new EmployeeSame(new PersonSame("Alice", "Wonderland", 0), "CEO")
+            ),
+            arguments(
+                "/test/%s/same/employees",
+                new EmployeeSame(new PersonSame("Alice", "Wonderland", 160), "")
+            ),
             arguments(
                 "/test/%s/renamed/employees",
                 new EmployeeRenamed(new PersonRenamed("   ", "Wonderland", 160), "CEO")
-            )//,
-//            arguments(
-//                "/test/%s/renamed/employees",
-//                new EmployeeRenamed(new PersonRenamed("Alice", "W", 160), "CEO")
-//            ),
-//            arguments(
-//                "/test/%s/renamed/employees",
-//                new EmployeeRenamed(new PersonRenamed("Alice", "Wonderland", 0), "CEO")
-//            ),
-//            arguments(
-//                "/test/%s/renamed/employees",
-//                new EmployeeRenamed(new PersonRenamed("Alice", "Wonderland", 160), "")
-//            )
+            ),
+            arguments(
+                "/test/%s/renamed/employees",
+                new EmployeeRenamed(new PersonRenamed("Alice", "W", 160), "CEO")
+            ),
+            arguments(
+                "/test/%s/renamed/employees",
+                new EmployeeRenamed(new PersonRenamed("Alice", "Wonderland", 0), "CEO")
+            ),
+            arguments(
+                "/test/%s/renamed/employees",
+                new EmployeeRenamed(new PersonRenamed("Alice", "Wonderland", 160), "")
+            )
         );
     }
 
