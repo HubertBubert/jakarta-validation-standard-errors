@@ -1,12 +1,13 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import online.itlab.springframework.validation.errors.standard.factory.tools.IReflectionTools;
+import online.itlab.springframework.validation.errors.standard.factory.tools.IStringTools;
+import online.itlab.springframework.validation.errors.standard.factory.tools.IWebRequestTools;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.validation.method.ParameterErrors;
@@ -37,11 +38,14 @@ import java.util.function.Function;
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
 
     private final IReflectionTools reflectionTools;
+    private final IStringTools stringTools;
     private final IWebRequestTools webRequestTools;
 
     public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools,
+                                                 final IStringTools stringTools,
                                                  final IWebRequestTools webRequestTools) {
         this.reflectionTools = reflectionTools;
+        this.stringTools = stringTools;
         this.webRequestTools = webRequestTools;
     }
     /**
@@ -89,7 +93,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             .stream()
             .map(err -> {
                 final String jsonPath = generators.path.apply(err.getField());
-                final String jsonName = lastSegment(jsonPath);
+                final String jsonName = stringTools.lastSegment(jsonPath, '.');
                 return Map.of(
                 "in", generators.in.apply(err.getField()),
                 "name", jsonName,
@@ -155,10 +159,6 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         return source;
     }
 
-//    private String detectRequestSource(final WebRequest request, final String requestName) {
-//
-//    }
-
     private String getRequestParamName(final Class<?> clazz, final String fieldJavaName) {
         Field field = reflectionTools.findField(clazz, fieldJavaName);
         final BindParam bindParam = field.getAnnotation(BindParam.class);
@@ -166,23 +166,6 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             ? bindParam.value()
             : field.getName();
     }
-
-//    private Parameter getRecordParameter(final Class<?> recordType, final String parameterName) throws NoSuchMethodException {
-//        if (!recordType.isRecord()) {
-//            throw new IllegalArgumentException("recordType must be record");
-//        }
-//
-//        final Class<?>[] types = Arrays.stream(recordType.getRecordComponents())
-//            .map(RecordComponent::getType)
-//            .toArray(Class<?>[]::new);
-//
-//        Constructor<?> canonical = recordType.getDeclaredConstructor(types);
-//
-//        Arrays.stream(canonical.getParameters())
-//            .filter(parameter -> parameterName.equals(parameter.getName()))
-//            .findFirst()
-//
-//    }
 
     @Override
     public ProblemDetail getValidationError(final HandlerMethodValidationException exception) {
@@ -340,16 +323,6 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         }).toList();
     }
 
-    // more like StringTools
-    public String lastSegment(String input) {
-        if (input == null || input.isEmpty()) {
-            return input;
-        }
-
-        int idx = input.lastIndexOf('.');
-        return idx == -1 ? input : input.substring(idx + 1);
-    }
-
     private List<Map<String, Object>> fromParameterErrors(String in, ParameterErrors pe, Locale locale) {
         List<Map<String, Object>> out = new ArrayList<>();
 
@@ -365,8 +338,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             } else {
                 path = fe.getField().toString();
             }
-//            final String path = fe.getField().toString();
-            final String name = lastSegment(path);
+            final String name = stringTools.lastSegment(path, '.');
 
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("in", in);

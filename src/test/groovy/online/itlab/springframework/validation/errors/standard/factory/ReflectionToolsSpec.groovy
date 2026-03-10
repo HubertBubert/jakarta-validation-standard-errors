@@ -2,10 +2,11 @@ package online.itlab.springframework.validation.errors.standard.factory
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.KnownImmutable
+import online.itlab.springframework.validation.errors.standard.factory.tools.ReflectionTools
 import spock.lang.Specification
 
 /**
- * Unit tests for {@link ReflectionTools}.
+ * Unit tests for {@link online.itlab.springframework.validation.errors.standard.factory.tools.ReflectionTools}.
  */
 class ReflectionToolsSpec extends Specification {
 
