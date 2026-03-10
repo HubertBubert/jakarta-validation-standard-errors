@@ -8,6 +8,6 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 
 public interface IJakartaValidationProblemDetailFactory {
     ProblemDetail getValidationError(MethodArgumentNotValidException exception, WebRequest request);
-    ProblemDetail getValidationError(HandlerMethodValidationException exception);
+    ProblemDetail getValidationError(HandlerMethodValidationException exception, WebRequest request);
     ProblemDetail getValidationError(MissingServletRequestPartException exception);
 }

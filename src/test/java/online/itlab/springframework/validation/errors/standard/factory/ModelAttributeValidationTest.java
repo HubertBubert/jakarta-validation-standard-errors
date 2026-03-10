@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+// NOTE:
+// Even though @ModelAttribute supports @RequestPart, Jakarta Validations do not have validations for this
 public class ModelAttributeValidationTest {
 
     RestTestClient client;
@@ -70,7 +72,8 @@ public class ModelAttributeValidationTest {
         var result = client.get()
             .uri(url)
             .header("header", headerParameter)
-            .exchange().returnResult();
+            .exchange()
+            .returnResult();
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
         var webRequest = controllerAdvice.getWebRequest();

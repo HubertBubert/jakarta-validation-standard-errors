@@ -75,6 +75,7 @@ public class RequestBodyValidationIntegrityCheckTest {
         var exceptionOnlyBody = controllerAdvice.getMethodArgumentNotValidException();
         var webRequestOnlyBody = controllerAdvice.getWebRequest();
         assertNotNull(exceptionOnlyBody);
+        assertNotNull(webRequestOnlyBody);
 
         var problemDetailOnlyBody = testedProblemFactory.getValidationError(exceptionOnlyBody, webRequestOnlyBody);
 
@@ -92,9 +93,11 @@ public class RequestBodyValidationIntegrityCheckTest {
             .returnResult();
 
         var exceptionMixed = controllerAdvice.getHandlerMethodValidationException();
+        var webRequestMixed = controllerAdvice.getWebRequest();
         assertNotNull(exceptionMixed);
+        assertNotNull(webRequestMixed);
 
-        var problemDetailMixed = testedProblemFactory.getValidationError(exceptionMixed);
+        var problemDetailMixed = testedProblemFactory.getValidationError(exceptionMixed, webRequestMixed);
 
         // then
         var bodyOnlyErrorsList = (List<Map<String, Object>>) problemDetailOnlyBody.getProperties().get("errors");

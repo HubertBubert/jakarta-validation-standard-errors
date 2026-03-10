@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -64,10 +65,12 @@ public class CookieValueValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -121,10 +124,12 @@ public class CookieValueValidationTest {
             );
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -230,10 +235,12 @@ public class CookieValueValidationTest {
         );
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());

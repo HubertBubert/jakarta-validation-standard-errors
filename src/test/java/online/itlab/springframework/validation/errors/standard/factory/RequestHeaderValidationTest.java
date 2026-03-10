@@ -64,10 +64,12 @@ public class RequestHeaderValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -160,10 +162,11 @@ public class RequestHeaderValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());

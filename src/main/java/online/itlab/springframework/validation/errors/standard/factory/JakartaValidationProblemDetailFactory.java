@@ -136,6 +136,9 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         }
     }
 
+
+
+
     private String detectSource(final Class<?> modelAttributeType, final WebRequest request, final String fieldName) {
         final String unknown = "unknown";
         if (!modelAttributeType.isRecord()) {
@@ -168,7 +171,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     }
 
     @Override
-    public ProblemDetail getValidationError(final HandlerMethodValidationException exception) {
+    public ProblemDetail getValidationError(final HandlerMethodValidationException exception, final WebRequest request) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setType(URI.create("/problems/validation-failed"));
         pd.setTitle("Request Validation Failed");
@@ -236,17 +239,29 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
             @Override
             public void modelAttribute(@Nullable ModelAttribute ann, ParameterErrors pe) {
-                errors.addAll(fromParameterErrors("query", pe, locale));
+                final var modelAttributeGenerators = new MethodArgumentGenerators(
+                    (failedFieldJavaPath) -> detectSource(pe.getMethodParameter().getParameterType(), request, failedFieldJavaPath),
+                    (failedFieldJavaPath) -> getRequestParamName(pe.getMethodParameter().getParameterType(), failedFieldJavaPath)
+                );
+                errors.addAll(fromParameterErrors(modelAttributeGenerators, pe, locale));
             }
 
             @Override
             public void requestBody(RequestBody ann, ParameterErrors pe) {
-                errors.addAll(fromParameterErrors("body", pe, locale));
+                final var bodyRequestGenerators = new MethodArgumentGenerators(
+                    (failedFieldJavaPath) -> "body",
+                    (failedFieldJavaPath) -> reflectionTools.toJsonPath(pe.getMethodParameter().getParameterType(), failedFieldJavaPath)
+                );
+                errors.addAll(fromParameterErrors(bodyRequestGenerators, pe, locale));
             }
 
             @Override
             public void requestPart(RequestPart ann, ParameterErrors pe) {
-                errors.addAll(fromParameterErrors("part", pe, locale));
+                final var bodyPartGenerators = new MethodArgumentGenerators(
+                    (failedFieldJavaPath) -> "part",
+                    (failedFieldJavaPath) -> failedFieldJavaPath
+                );
+                errors.addAll(fromParameterErrors(bodyPartGenerators, pe, locale));
             }
 
             @Override
@@ -323,7 +338,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         }).toList();
     }
 
-    private List<Map<String, Object>> fromParameterErrors(String in, ParameterErrors pe, Locale locale) {
+    private List<Map<String, Object>> fromParameterErrors(MethodArgumentGenerators generators, ParameterErrors pe, Locale locale) {
         List<Map<String, Object>> out = new ArrayList<>();
 
         for (FieldError fe : pe.getFieldErrors()) {
@@ -331,19 +346,15 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             String message = fe.getDefaultMessage();
 
             // it can be path for @RequestBody validation error
-            final String path;
-            if ("body".equals(in)) {
-                final Class<?> parameterType = pe.getMethodParameter().getParameterType();
-                path = reflectionTools.toJsonPath(parameterType, fe.getField().toString());
-            } else {
-                path = fe.getField().toString();
-            }
-            final String name = stringTools.lastSegment(path, '.');
+            final String javaPath = fe.getField().toString();
+            final String requestPath = generators.path.apply(javaPath);
+            final String name = stringTools.lastSegment(requestPath, '.');
+            final String in = generators.in.apply(javaPath);
 
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("in", in);
             m.put("name", name);            // for body/model attributes, field path is the public name
-            m.put("path", path);
+            m.put("path", requestPath);
             m.put("rejectedValue", fe.getRejectedValue());
             m.put("message", message);
             out.add(m);
@@ -354,7 +365,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             String message = oe.getDefaultMessage();
 
             Map<String, Object> m = new LinkedHashMap<>();
-            m.put("in", in);
+            m.put("in", "dummy");
             m.put("name", pe.getObjectName());
             m.put("path", pe.getObjectName());
             m.put("message", message);

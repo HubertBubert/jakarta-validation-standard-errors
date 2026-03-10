@@ -61,10 +61,12 @@ public class PathVariableValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
@@ -156,10 +158,12 @@ public class PathVariableValidationTest {
             .exchange();
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
+        var webRequest = controllerAdvice.getWebRequest();
         assertNotNull(exception);
+        assertNotNull(webRequest);
 
         // when:
-        var problemDetail = testedProblemFactory.getValidationError(exception);
+        var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
         assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
