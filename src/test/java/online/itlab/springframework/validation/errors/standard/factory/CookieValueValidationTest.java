@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.CookieValue;
