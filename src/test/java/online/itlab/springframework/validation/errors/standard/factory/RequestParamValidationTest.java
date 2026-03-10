@@ -227,7 +227,7 @@ public class RequestParamValidationTest {
     @ParameterizedTest
     @MethodSource("multiValueParamProvider")
     public void multiValueParamIncorrect(final List<String> nameParameters,
-                                         final String expectedName,
+                                         final String expectedPath,
                                          final Object expectedRejectedValue,
                                          final String expectedMessage) {
 
@@ -255,7 +255,7 @@ public class RequestParamValidationTest {
         final Map<String, Object> errorDetailsMap = new HashMap<>();
         errorDetailsMap.put("in", "query");
         errorDetailsMap.put("name", "name");
-        errorDetailsMap.put("path", expectedName);
+        errorDetailsMap.put("path", expectedPath);
         errorDetailsMap.put("rejectedValue", expectedRejectedValue);
         errorDetailsMap.put("message", expectedMessage);
 
