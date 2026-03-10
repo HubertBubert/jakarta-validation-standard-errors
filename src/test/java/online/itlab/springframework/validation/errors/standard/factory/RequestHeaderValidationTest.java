@@ -65,17 +65,21 @@ public class RequestHeaderValidationTest {
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
         var webRequest = controllerAdvice.getWebRequest();
-        assertNotNull(exception);
-        assertNotNull(webRequest);
+        assertThat(exception).isNotNull();
+        assertThat(webRequest).isNotNull();
 
         // when:
         var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
-        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
-        assertEquals("Request Validation Failed", problemDetail.getTitle());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
-        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+        assertThat(problemDetail.getType())
+            .isEqualTo(URI.create("/problems/validation-failed"));
+        assertThat(problemDetail.getTitle())
+            .isEqualTo("Request Validation Failed");
+        assertThat(problemDetail.getStatus())
+            .isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(problemDetail.getDetail())
+            .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
 
         Map<String, List<Map<String, Object>>> expected =
             Map.of(
@@ -91,7 +95,7 @@ public class RequestHeaderValidationTest {
                 )
             );
 
-        assertEquals(expected, problemDetail.getProperties());
+        assertThat(problemDetail.getProperties()).isEqualTo(expected);
     }
 
     static Stream<Arguments> singleCasesProvider() {
@@ -163,16 +167,20 @@ public class RequestHeaderValidationTest {
 
         var exception = controllerAdvice.getHandlerMethodValidationException();
         var webRequest = controllerAdvice.getWebRequest();
-        assertNotNull(exception);
+        assertThat(exception).isNotNull();
 
         // when:
         var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
-        assertEquals(URI.create("/problems/validation-failed"), problemDetail.getType());
-        assertEquals("Request Validation Failed", problemDetail.getTitle());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
-        assertEquals("Request has one or more validation errors. Please fix them and try again.", problemDetail.getDetail());
+        assertThat(problemDetail.getType())
+            .isEqualTo(URI.create("/problems/validation-failed"));
+        assertThat(problemDetail.getTitle())
+            .isEqualTo("Request Validation Failed");
+        assertThat(problemDetail.getStatus())
+            .isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(problemDetail.getDetail())
+            .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
 
         List<Map<String, Object>> expectedErrorsList = List.of(
             Map.of(

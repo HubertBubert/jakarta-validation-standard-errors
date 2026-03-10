@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class ModelAttributeValidationIntegrityCheckTest {
@@ -67,8 +66,8 @@ public class ModelAttributeValidationIntegrityCheckTest {
 
         var onlyException = controllerAdvice.getMethodArgumentNotValidException();
         var onlyWebRequest = controllerAdvice.getWebRequest();
-        assertNotNull(onlyException);
-        assertNotNull(onlyWebRequest);
+        assertThat(onlyException).isNotNull();
+        assertThat(onlyWebRequest).isNotNull();
 
         var problemDetailOnly = testedProblemFactory.getValidationError(onlyException, onlyWebRequest);
 
@@ -85,8 +84,8 @@ public class ModelAttributeValidationIntegrityCheckTest {
 
         var mixedException = controllerAdvice.getHandlerMethodValidationException();
         var mixedWebRequest = controllerAdvice.getWebRequest();
-        assertNotNull(mixedException);
-        assertNotNull(mixedWebRequest);
+        assertThat(mixedException).isNotNull();
+        assertThat(mixedWebRequest).isNotNull();
 
         var problemDetailMixed = testedProblemFactory.getValidationError(mixedException, mixedWebRequest);
 

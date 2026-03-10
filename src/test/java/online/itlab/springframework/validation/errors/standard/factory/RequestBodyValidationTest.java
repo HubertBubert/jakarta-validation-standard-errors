@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class RequestBodyValidationTest {
@@ -70,27 +69,23 @@ public class RequestBodyValidationTest {
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
         var webRequest = controllerAdvice.getWebRequest();
-        assertNotNull(exception);
+        assertThat(exception).isNotNull();
 
         // when:
         var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
 
         // then:
-        assertEquals(
-            URI.create("/problems/validation-failed"),
-            problemDetail.getType()
+        assertThat(problemDetail.getType()).isEqualTo(
+            URI.create("/problems/validation-failed")
         );
-        assertEquals(
-            "Request Validation Failed",
-            problemDetail.getTitle()
+        assertThat(problemDetail.getTitle()).isEqualTo(
+            "Request Validation Failed"
         );
-        assertEquals(
-            HttpStatus.BAD_REQUEST.value(),
-            problemDetail.getStatus()
+        assertThat(problemDetail.getStatus()).isEqualTo(
+            HttpStatus.BAD_REQUEST.value()
         );
-        assertEquals(
-            "Request has one or more validation errors. Please fix them and try again.",
-            problemDetail.getDetail()
+        assertThat(problemDetail.getDetail()).isEqualTo(
+            "Request has one or more validation errors. Please fix them and try again."
         );
 
         Map<String, List<Map<String, Object>>> expected =
@@ -107,7 +102,7 @@ public class RequestBodyValidationTest {
                 )
             );
 
-        assertEquals(expected, problemDetail.getProperties());
+        assertThat(problemDetail.getProperties()).isEqualTo(expected);
     }
 
     static Stream<Arguments> singlePersonCasesProvider() {
