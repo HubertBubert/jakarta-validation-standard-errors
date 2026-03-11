@@ -60,25 +60,29 @@ public class ReflectionTools implements IReflectionTools {
     private Class<?> getNextSegmentClass(final Field field) {
         final boolean isCollection = Collection.class.isAssignableFrom(field.getType());
         if (isCollection) {
-            Type genericType = field.getGenericType();
-            if (genericType instanceof ParameterizedType parameterizedType) {
-                Type argType = parameterizedType.getActualTypeArguments()[0];
-                if (argType instanceof Class<?>) {
-                    return (Class<?>) argType;
-                }
-
-                // TODO List of lists - still needs to be supported
-                if (argType instanceof ParameterizedType pt) {
-                    return (Class<?>) pt.getRawType();
-                }
-            }
+            return getGenericsType(field, 0);
         }
         final boolean isMap = Map.class.isAssignableFrom(field.getType());
         if (isMap) {
-            // TODO temporal destructive behavior - replace with proper handling
-            throw new UnsupportedOperationException("Cannot follow Maps");
+            return getGenericsType(field, 1);
         }
         return field.getType();
+    }
+
+    private Class<?> getGenericsType(final Field field, final int typeIndex) {
+        final Type genericType = field.getGenericType();
+        if (genericType instanceof ParameterizedType parameterizedType) {
+            Type argType = parameterizedType.getActualTypeArguments()[typeIndex];
+            if (argType instanceof Class<?>) {
+                return (Class<?>) argType;
+            }
+
+            // TODO list/map of lists/maps - still needs to be supported
+            if (argType instanceof ParameterizedType pt) {
+                return (Class<?>) pt.getRawType();
+            }
+        }
+        throw new IllegalStateException("Assumed generic type is not a generic type");
     }
 
     public Field findField(final Class<?> type, final String javaName) {

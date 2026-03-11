@@ -22,14 +22,16 @@ class ReflectionToolsSpec extends Specification {
         then:
             jsonPath == expectedJsonPath
         where:
-            javaPath                           | clazz           || expectedJsonPath
-            'person.firstName'                 | Employee        || javaPath
-            'position'                         | Employee        || javaPath
-            'person.firstName'                 | EmployeeRenamed || 'pe.fn'
-            'position'                         | EmployeeRenamed || 'po'
+            javaPath                                  | clazz           || expectedJsonPath
+            'person.firstName'                        | Employee        || javaPath
+            'position'                                | Employee        || javaPath
+            'person.firstName'                        | EmployeeRenamed || 'pe.fn'
+            'position'                                | EmployeeRenamed || 'po'
             // collections part
-            'loans[1].guarantors[3].firstName' | Finances        || 'loans[1].guarantors[3].firstName'
-            'loans[1].guarantors[3].firstName' | FinancesRenamed || 'l[1].g[3].fn'
+            'loans[1].guarantors[3].firstName'        | Finances        || 'loans[1].guarantors[3].firstName'
+            'loans[1].guarantors[3].firstName'        | FinancesRenamed || 'l[1].g[3].fn'
+            'creditCards[4].spendingByCategory[food]' | Finances        || 'creditCards[4].spendingByCategory[food]'
+            'creditCards[4].spendingByCategory[food]' | FinancesRenamed || 'cc[4].sbc[food]'
     }
 
     def 'throws exception when there is no java path'() {

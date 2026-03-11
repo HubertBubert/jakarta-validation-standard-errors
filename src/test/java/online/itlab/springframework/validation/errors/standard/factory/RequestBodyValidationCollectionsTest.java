@@ -148,43 +148,44 @@ public class RequestBodyValidationCollectionsTest {
                 "   ",
                 "must not be blank"
             ),
-//            arguments(
-//                Account.builder()
-//                    .creditCards(List.of(
-//                        CreditCard.builder()
-//                            .availableBalance(new BigDecimal("9.49"))
-//                            .spendingByCategory(Map.of(
-//                                "food", new BigDecimal("3.49"),
-//                                "hobby", new BigDecimal("-1.99"),
-//                                "apartment", new BigDecimal("5.99")
-//                            ))
-//                            .build()
-//                    ))
-//                    .loans(List.of(
-//                        Loan.builder()
-//                            .initialAmount(new BigDecimal("100.00"))
-//                            .currentAmount(new BigDecimal("49.00"))
-//                            .guarantors(List.of(
-//                                new Person("Alice", "Ace"),
-//                                new Person("Bob", "Bale")
-//                            ))
-//                            .build()
-//                    ))
-//                    .access(Map.of(
-//                        AccessType.OWNER, List.of(
-//                            new Person("Sharon", "Stone")
-//                        ),
-//                        AccessType.FULL, List.of(
-//                            new Person("Caroline", "Cotton"),
-//                            new Person("David", "Diamond")
-//                        )
-//                    ))
-//                    .build(),
-//                "spendingByCategory[hobby]",
-//                "creditCards[0].spendingByCategory[hobby]",
-//                new BigDecimal("-1.99"),
-//                "must be greater than 0"
-//            )
+            arguments(
+                "/test/same/finances",
+                Account.builder()
+                    .creditCards(List.of(
+                        CreditCard.builder()
+                            .availableBalance(new BigDecimal("9.49"))
+                            .spendingByCategory(Map.of(
+                                "food", new BigDecimal("3.49"),
+                                "hobby", new BigDecimal("-1.99"),
+                                "apartment", new BigDecimal("5.99")
+                            ))
+                            .build()
+                    ))
+                    .loans(List.of(
+                        Loan.builder()
+                            .initialAmount(new BigDecimal("100.00"))
+                            .currentAmount(new BigDecimal("49.00"))
+                            .guarantors(List.of(
+                                new Person("Alice", "Ace"),
+                                new Person("Bob", "Bale")
+                            ))
+                            .build()
+                    ))
+                    .access(Map.of(
+                        AccessType.OWNER, List.of(
+                            new Person("Sharon", "Stone")
+                        ),
+                        AccessType.FULL, List.of(
+                            new Person("Caroline", "Cotton"),
+                            new Person("David", "Diamond")
+                        )
+                    ))
+                    .build(),
+                "spendingByCategory[hobby]",
+                "creditCards[0].spendingByCategory[hobby]",
+                new BigDecimal("-1.99"),
+                "must be greater than 0"
+            ),
             arguments(
                 "/test/renamed/finances",
                 AccountRenamed.builder()
@@ -222,6 +223,44 @@ public class RequestBodyValidationCollectionsTest {
                 "l[0].g[0].fn",
                 "   ",
                 "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/finances",
+                AccountRenamed.builder()
+                    .creditCards(List.of(
+                        CreditCardRenamed.builder()
+                            .availableBalance(new BigDecimal("9.49"))
+                            .spendingByCategory(Map.of(
+                                "food", new BigDecimal("3.49"),
+                                "hobby", new BigDecimal("1.99"),
+                                "apartment", new BigDecimal("-5.99")
+                            ))
+                            .build()
+                    ))
+                    .loans(List.of(
+                        LoanRenamed.builder()
+                            .initialAmount(new BigDecimal("100.00"))
+                            .currentAmount(new BigDecimal("49.00"))
+                            .guarantors(List.of(
+                                new PersonRenamed("Alice", "Ace"),
+                                new PersonRenamed("Bob", "Bale")
+                            ))
+                            .build()
+                    ))
+                    .access(Map.of(
+                        AccessType.OWNER, List.of(
+                            new PersonRenamed("Sharon", "Stone")
+                        ),
+                        AccessType.FULL, List.of(
+                            new PersonRenamed("Caroline", "Cotton"),
+                            new PersonRenamed("David", "Diamond")
+                        )
+                    ))
+                    .build(),
+                "sbc[apartment]",
+                "cc[0].sbc[apartment]",
+                new BigDecimal("-5.99"),
+                "must be greater than 0"
             )
         );
     }
