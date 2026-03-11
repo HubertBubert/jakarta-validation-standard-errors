@@ -23,6 +23,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -760,6 +761,206 @@ public class RequestBodyValidationCollectionsTest {
                 "mp[managers][0].ln",
                 "   ",
                 "must not be blank"
+            ),
+            arguments(
+                "/test/same/set",
+                new SetBody(
+                    Collections.EMPTY_SET
+                ),
+                "people",
+                "people",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/same/set",
+                new SetBody(
+                    Set.of(
+                        new Person("   ", "Ace"),
+                        new Person("Betty", "Bad")
+                    )
+                ),
+                "firstName",
+                "people[].firstName",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/same/set",
+                new SetBody(
+                    Set.of(
+                        new Person("Alice", "Ace"),
+                        new Person("Betty", "   ")
+                    )
+                ),
+                "lastName",
+                "people[].lastName",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/set",
+                new SetBodyRenamed(
+                    Collections.EMPTY_SET
+                ),
+                "ppl",
+                "ppl",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/renamed/set",
+                new SetBodyRenamed(
+                    Set.of(
+                        new PersonRenamed("   ", "Ace"),
+                        new PersonRenamed("Betty", "Bad")
+                    )
+                ),
+                "fn",
+                "ppl[].fn",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/set",
+                new SetBodyRenamed(
+                    Set.of(
+                        new PersonRenamed("Alice", "Ace"),
+                        new PersonRenamed("Betty", "   ")
+                    )
+                ),
+                "ln",
+                "ppl[].ln",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/same/set/set",
+                new SetSetBody(
+                    Collections.EMPTY_SET
+                ),
+                "people",
+                "people",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/same/set/set",
+                new SetSetBody(
+                    Set.of(
+                        Set.of(
+                            new Person("Alice", "Ace"),
+                            new Person("Betty", "Block")
+                        ),
+                        Collections.EMPTY_SET
+                    )
+                ),
+                "people[]",
+                "people[]",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/same/set/set",
+                new SetSetBody(
+                    Set.of(
+                        Set.of(
+                            new Person("Alice", "Ace"),
+                            new Person("   ", "Block")
+                        ),
+                        Set.of(
+                            new Person("Cathy", "Clock"),
+                            new Person("Danny", "Door")
+                        )
+                    )
+                ),
+                "firstName",
+                "people[][].firstName",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/same/set/set",
+                new SetSetBody(
+                    Set.of(
+                        Set.of(
+                            new Person("Alice", "Ace"),
+                            new Person("Betty", "Block")
+                        ),
+                        Set.of(
+                            new Person("Cathy", "   "),
+                            new Person("Danny", "Door")
+                        )
+                    )
+                ),
+                "lastName",
+                "people[][].lastName",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/set/set",
+                new SetSetBodyRenamed(
+                    Collections.EMPTY_SET
+                ),
+                "ppl",
+                "ppl",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/renamed/set/set",
+                new SetSetBodyRenamed(
+                    Set.of(
+                        Set.of(
+                            new PersonRenamed("Alice", "Ace"),
+                            new PersonRenamed("Betty", "Block")
+                        ),
+                        Collections.EMPTY_SET
+                    )
+                ),
+                "ppl[]",
+                "ppl[]",
+                Collections.EMPTY_SET,
+                "must not be empty"
+            ),
+            arguments(
+                "/test/renamed/set/set",
+                new SetSetBodyRenamed(
+                    Set.of(
+                        Set.of(
+                            new PersonRenamed("Alice", "Ace"),
+                            new PersonRenamed("   ", "Block")
+                        ),
+                        Set.of(
+                            new PersonRenamed("Cathy", "Clock"),
+                            new PersonRenamed("Danny", "Door")
+                        )
+                    )
+                ),
+                "fn",
+                "ppl[][].fn",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/set/set",
+                new SetSetBodyRenamed(
+                    Set.of(
+                        Set.of(
+                            new PersonRenamed("Alice", "Ace"),
+                            new PersonRenamed("Betty", "Block")
+                        ),
+                        Set.of(
+                            new PersonRenamed("Cathy", "   "),
+                            new PersonRenamed("Danny", "Door")
+                        )
+                    )
+                ),
+                "ln",
+                "ppl[][].ln",
+                "   ",
+                "must not be blank"
             )
         );
     }
@@ -837,6 +1038,26 @@ public class RequestBodyValidationCollectionsTest {
         MapListBodyRenamed postRenamedMap(final @RequestBody @Valid MapListBodyRenamed mapBody) {
             return mapBody;
         }
+
+        @PostMapping("/same/set")
+        SetBody postSameSet(final @RequestBody @Valid SetBody setBody) {
+            return setBody;
+        }
+
+        @PostMapping("/renamed/set")
+        SetBodyRenamed postRenamedSet(final @RequestBody @Valid SetBodyRenamed setBody) {
+            return setBody;
+        }
+
+        @PostMapping("/same/set/set")
+        SetSetBody postSameSetSet(final @RequestBody @Valid SetSetBody setBody) {
+            return setBody;
+        }
+
+        @PostMapping("/renamed/set/set")
+        SetSetBodyRenamed postRenamedSetSet(final @RequestBody @Valid SetSetBodyRenamed setBody) {
+            return setBody;
+        }
     }
 
     record Person(
@@ -868,6 +1089,14 @@ public class RequestBodyValidationCollectionsTest {
         @NotEmpty Map<@NotBlank String, @NotEmpty List<@Valid Person>> mappedPeople
     ){}
 
+    record SetBody(
+        @NotEmpty Set<@Valid Person> people
+    ){}
+
+    record SetSetBody(
+        @NotEmpty Set<@NotEmpty Set<@Valid Person>> people
+    ){}
+
     record PersonRenamed(
         @JsonProperty("fn") @NotBlank String firstName,
         @JsonProperty("ln") @NotBlank String lastName
@@ -895,5 +1124,13 @@ public class RequestBodyValidationCollectionsTest {
 
     record MapListBodyRenamed(
         @JsonProperty("mp") @NotEmpty Map<@NotBlank String, @NotEmpty List<@Valid PersonRenamed>> mappedPeople
+    ){}
+
+    record SetBodyRenamed(
+        @JsonProperty("ppl") @NotEmpty Set<@Valid PersonRenamed> people
+    ){}
+
+    record SetSetBodyRenamed(
+        @JsonProperty("ppl") @NotEmpty Set<@NotEmpty Set<@Valid PersonRenamed>> people
     ){}
 }

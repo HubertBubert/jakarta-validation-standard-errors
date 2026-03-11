@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 // NOTE: Spring provides itw own implementation of reflection tools
@@ -59,13 +59,14 @@ public class ReflectionTools implements IReflectionTools {
         }
         if (type instanceof ParameterizedType) {
             Type rawType = ((ParameterizedType) type).getRawType();
-            if (rawType == List.class) {                                    // no Set support
-                return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[0]);
-            } else if (rawType == Map.class) {
-                return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[1]);
-            } else if (rawType instanceof Class) {
+            if (rawType instanceof Class) {
+                if (Collection.class.isAssignableFrom((Class<?>) rawType)) {
+                    return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[0]);
+                } else if (rawType == Map.class) {
+                    return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[1]);
+                }
                 return (Class) rawType;
-            } else {
+            }  else {
                 throw new IllegalStateException("Unexpected ParameterizedType type: " + rawType);
             }
         }
