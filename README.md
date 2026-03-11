@@ -72,8 +72,8 @@ Here is the message produces by the library for the same request:
     {
       "in": "body",
       "name": "firstName",
-      "path": "person.firstName",
-      "rejectedValue": "A",
+      "path": "friends[0].firstName",
+      "rejectedValue": "B",
       "message": "size must be between 2 and 100"
     }
   ]

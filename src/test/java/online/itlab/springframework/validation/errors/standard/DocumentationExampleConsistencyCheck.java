@@ -76,18 +76,24 @@ public class DocumentationExampleConsistencyCheck {
     @Test
     public void docTest() {
         var result = client
-            .patch().uri("/doc/employees/99")
+            .patch().uri("/doc/people/99")
             .header("token", "badToken")
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_JSON)
-            .body(Employee.builder()
+            .body(PersonWithFriends.builder()
                 .person(Person.builder()
-                    .firstName("A")
+                    .firstName("Alice")
                     .lastName("Wonderland")
                     .height(0)
                     .build()
                 )
-                .position("main character")
+                .friends(List.of(
+                    Person.builder()
+                        .firstName("B")
+                        .lastName("Blue")
+                        .height(170)
+                        .build()
+                ))
                 .build()
             )
             .exchange()
@@ -136,8 +142,8 @@ public class DocumentationExampleConsistencyCheck {
             Map.of(
                 "in", "body",
                 "name", "firstName",
-                "path", "person.firstName",
-                "rejectedValue", "A",
+                "path", "friends[0].firstName",
+                "rejectedValue", "B",
                 "message", "size must be between 2 and 100"
             )
         );
@@ -151,11 +157,11 @@ public class DocumentationExampleConsistencyCheck {
     @RestController
     @RequestMapping("/doc")
     public class DocController {
-        @PatchMapping("/employees/{id}")
-        Employee patchEmployee(final @PathVariable @Min(100) Integer id,
+        @PatchMapping("/people/{id}")
+        PersonWithFriends patchEmployee(final @PathVariable @Min(100) Integer id,
                                final @RequestHeader @Size(min = 16, max=16) String token,
-                               final @RequestBody @Valid DocumentationExampleConsistencyCheck.Employee employee) {
-            return employee;
+                               final @RequestBody @Valid PersonWithFriends personWithFriends) {
+            return personWithFriends;
         }
     }
 
@@ -167,8 +173,14 @@ public class DocumentationExampleConsistencyCheck {
     ){}
 
     @Builder
-    record Employee(
-        @Valid @NotNull DocumentationExampleConsistencyCheck.Person person,
+    record PersonWithFriends(
+        @Valid @NotNull Person person,
+        @NotEmpty List<@Valid Person> friends
+    ){}
+
+    @Builder
+    record Department(
+        @Valid @NotNull Person employ,
         @NotEmpty String position
     ){}
 }
