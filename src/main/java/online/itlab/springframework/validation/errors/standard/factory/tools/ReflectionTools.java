@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 // NOTE: Spring provides itw own implementation of reflection tools
@@ -45,44 +45,31 @@ public class ReflectionTools implements IReflectionTools {
             //      Also if field is not a collection and indexPart is not empty this is IllegalStateException
             //      This should never happen as long as Jakarta Validation works correctly
             //      Consider handling this situation.
-            current = getNextSegmentClass(field);
+            current = getNextSegmentClass(field.getGenericType());
         }
-
         return result.toString();
     }
 
     /**
-     * Returns a class to follow the indexed java path.
-     * Result:
-     * - actual class -> actual class
-     * - collection -> parametrized class
+     * For collections returns stored types
      */
-    private Class<?> getNextSegmentClass(final Field field) {
-        final boolean isCollection = Collection.class.isAssignableFrom(field.getType());
-        if (isCollection) {
-            return getGenericsType(field, 0);
+    private Class getNextSegmentClass(final Type type) {
+        if (type instanceof Class) {
+            return (Class) type;
         }
-        final boolean isMap = Map.class.isAssignableFrom(field.getType());
-        if (isMap) {
-            return getGenericsType(field, 1);
-        }
-        return field.getType();
-    }
-
-    private Class<?> getGenericsType(final Field field, final int typeIndex) {
-        final Type genericType = field.getGenericType();
-        if (genericType instanceof ParameterizedType parameterizedType) {
-            Type argType = parameterizedType.getActualTypeArguments()[typeIndex];
-            if (argType instanceof Class<?>) {
-                return (Class<?>) argType;
-            }
-
-            // TODO list/map of lists/maps - still needs to be supported
-            if (argType instanceof ParameterizedType pt) {
-                return (Class<?>) pt.getRawType();
+        if (type instanceof ParameterizedType) {
+            Type rawType = ((ParameterizedType) type).getRawType();
+            if (rawType == List.class) {                                    // no Set support
+                return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[0]);
+            } else if (rawType == Map.class) {
+                return getNextSegmentClass(((ParameterizedType) type).getActualTypeArguments()[1]);
+            } else if (rawType instanceof Class) {
+                return (Class) rawType;
+            } else {
+                throw new IllegalStateException("Unexpected ParameterizedType type: " + rawType);
             }
         }
-        throw new IllegalStateException("Assumed generic type is not a generic type");
+        throw new IllegalStateException("Unexpected type: " + type);
     }
 
     public Field findField(final Class<?> type, final String javaName) {

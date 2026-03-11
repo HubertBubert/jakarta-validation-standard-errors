@@ -2,7 +2,6 @@ package online.itlab.springframework.validation.errors.standard.factory.tools
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.KnownImmutable
-import lombok.Builder
 import spock.lang.Specification
 
 /**
@@ -22,16 +21,22 @@ class ReflectionToolsSpec extends Specification {
         then:
             jsonPath == expectedJsonPath
         where:
-            javaPath                                  | clazz           || expectedJsonPath
-            'person.firstName'                        | Employee        || javaPath
-            'position'                                | Employee        || javaPath
-            'person.firstName'                        | EmployeeRenamed || 'pe.fn'
-            'position'                                | EmployeeRenamed || 'po'
+            javaPath                                       | clazz           || expectedJsonPath
+            'person.firstName'                             | Employee        || javaPath
+            'position'                                     | Employee        || javaPath
+            'person.firstName'                             | EmployeeRenamed || 'pe.fn'
+            'position'                                     | EmployeeRenamed || 'po'
             // collections part
-            'loans[1].guarantors[3].firstName'        | Finances        || 'loans[1].guarantors[3].firstName'
-            'loans[1].guarantors[3].firstName'        | FinancesRenamed || 'l[1].g[3].fn'
-            'creditCards[4].spendingByCategory[food]' | Finances        || 'creditCards[4].spendingByCategory[food]'
-            'creditCards[4].spendingByCategory[food]' | FinancesRenamed || 'cc[4].sbc[food]'
+            'loans[1].guarantors[3].firstName'             | Finances        || 'loans[1].guarantors[3].firstName'
+            'loans[1].guarantors[3].firstName'             | FinancesRenamed || 'l[1].g[3].fn'
+            'creditCards[4].spendingByCategory[food]'      | Finances        || 'creditCards[4].spendingByCategory[food]'
+            'creditCards[4].spendingByCategory[food]'      | FinancesRenamed || 'cc[4].sbc[food]'
+            // maps part
+            'subAccounts[main].beneficiaries[1].firstName' | Finances        || 'subAccounts[main].beneficiaries[1].firstName'
+            'subAccounts[main].beneficiaries[1].firstName' | FinancesRenamed || 'sa[main].be[1].fn'
+            'subAccounts[main].balances[usd]'              | Finances        || 'subAccounts[main].balances[usd]'
+            'subAccounts[main].balances[usd]'              | FinancesRenamed || 'sa[main].ba[usd]'
+
     }
 
     def 'throws exception when there is no java path'() {
@@ -92,39 +97,41 @@ class ReflectionToolsSpec extends Specification {
         Integer height;
     }
 
-
     record CreditCard(
-        BigDecimal availableBalance,
         Map<String, BigDecimal> spendingByCategory
     ){}
 
     record Loan(
-        BigDecimal initialAmount,
-        BigDecimal currentAmount,
         List<Person> guarantors
     ){}
 
-    record Finances(
-        List<CreditCard> creditCards,
-        List<Loan> loans
+    record SubAccount(
+       List<Person> beneficiaries,
+       Map<String, BigDecimal> balances
     ){}
 
-    @Builder
+    record Finances(
+        List<CreditCard> creditCards,               // list of maps
+        List<Loan> loans,                           // list of lists
+        Map<String, SubAccount> subAccounts         // map of lists + map of maps
+    ){}
+
     record CreditCardRenamed(
-        @JsonProperty("ab") BigDecimal availableBalance,
         @JsonProperty("sbc") Map<String, BigDecimal> spendingByCategory
     ){}
 
-    @Builder
     record LoanRenamed(
-        @JsonProperty("ia") BigDecimal initialAmount,
-        @JsonProperty("ca") BigDecimal currentAmount,
         @JsonProperty("g") List<PersonRenamed> guarantors
     ){}
 
-    @Builder
+    record SubAccountRenamed(
+        @JsonProperty("be")  List<PersonRenamed> beneficiaries,
+        @JsonProperty("ba") Map<String, BigDecimal> balances
+    ){}
+
     record FinancesRenamed(
-        @JsonProperty("cc") List<CreditCardRenamed> creditCards,
-        @JsonProperty("l") List<LoanRenamed> loans
+        @JsonProperty("cc") List<CreditCardRenamed> creditCards,            // list of maps
+        @JsonProperty("l") List<LoanRenamed> loans,                         // list of lists
+        @JsonProperty("sa") Map<String, SubAccountRenamed> subAccounts      // map of lists + map of maps
     ){}
 }

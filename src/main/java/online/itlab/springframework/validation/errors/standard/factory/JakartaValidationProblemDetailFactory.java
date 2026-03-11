@@ -29,6 +29,7 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -94,14 +95,13 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             .map(err -> {
                 final String jsonPath = generators.path.apply(err.getField());
                 final String jsonName = stringTools.lastSegment(jsonPath, '.');
-                return Map.of(
-                "in", generators.in.apply(err.getField()),
-                "name", jsonName,
-                "path", jsonPath,
-                "message", err.getDefaultMessage(),
-                "rejectedValue", err.getRejectedValue()
-//                "rejectedValue", String.valueOf(err.getRejectedValue())
-                );
+                final Map<String, Object> errorDetails = new HashMap<>();
+                errorDetails.put("in", generators.in.apply(err.getField()));
+                errorDetails.put("name", jsonName);
+                errorDetails.put("path", jsonPath);
+                errorDetails.put("message", err.getDefaultMessage());
+                errorDetails.put("rejectedValue", err.getRejectedValue());      // can be null
+                return errorDetails;
             })
             .toList();
 
