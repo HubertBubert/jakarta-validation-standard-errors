@@ -2,17 +2,18 @@ package online.itlab.springframework.validation.errors.standard.factory.tools
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.KnownImmutable
+import online.itlab.springframework.validation.errors.standard.factory.domain.ValidationPathFactory
 import spock.lang.Specification
 
 /**
  * Unit tests for {@link ReflectionTools}.
  */
-class ReflectionToolsSpec extends Specification {
+class ReflectionToolsIT extends Specification {
 
     ReflectionTools testedTools
 
     def setup() {
-        testedTools = new ReflectionTools()
+        testedTools = new ReflectionTools(new ValidationPathFactory())
     }
 
     def 'correctly translates java path into json path'() {

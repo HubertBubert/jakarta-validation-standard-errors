@@ -1,6 +1,8 @@
 package online.itlab.springframework.validation.errors.standard.factory.tools;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
+import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory.ValidationPath;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -14,6 +16,12 @@ import java.util.Map;
 // TODO evaluate Spring implementation and it's usage
 public class ReflectionTools implements IReflectionTools {
 
+    private final IValidationPathFactory validationPathFactory;
+
+    public ReflectionTools(final IValidationPathFactory validationPathFactory) {
+        this.validationPathFactory = validationPathFactory;
+    }
+
     /**
      *
      * @param rootClass
@@ -22,22 +30,22 @@ public class ReflectionTools implements IReflectionTools {
      * @return
      */
     public String toJsonPath(final Class<?> rootClass, final String indexedJavaPath) {
-        final String[] pathSegments = indexedJavaPath.split("\\.");
+        final String[] indexedPathSegments = indexedJavaPath.split("\\.");
         final StringBuilder result = new StringBuilder();
 
         Class<?> current = rootClass;
-        for (int i = 0; i < pathSegments.length; i++) {
-            final String pathSegment = pathSegments[i];
-            final PathSegment decomposedPathSegment = decompose(pathSegment);
+        for (int i = 0; i < indexedPathSegments.length; i++) {
+            final String indexedPathSegment = indexedPathSegments[i];
+            final ValidationPath validationPath = validationPathFactory.create(indexedPathSegment);
 
-            final Field field = findField(current, decomposedPathSegment.javaFieldName);
+            final Field field = findField(current, validationPath.javaFieldName());
             final String jsonName = getJsonName(field);
 
             if (i > 0) {
                 result.append(".");
             }
             result.append(jsonName);
-            result.append(decomposedPathSegment.indexPart);
+            result.append(validationPath.indexPart());
 
             // if a field is a collection we need to take the class of the actual element
             // TODO getNextSegmentClass ignores decomposedPathSegment.indexPart
@@ -82,26 +90,10 @@ public class ReflectionTools implements IReflectionTools {
             ));
     }
 
-    private PathSegment decompose(final String pathSegment) {
-        int idx = pathSegment.indexOf('[');
-        if (idx == -1) {
-            return new PathSegment(pathSegment, "");
-        }
-        return new PathSegment(
-            pathSegment.substring(0, idx),
-            pathSegment.substring(idx)
-        );
-    }
-
     private String getJsonName(final Field field) {
         final JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
         return jsonProperty != null
             ? jsonProperty.value()
             : field.getName();
     }
-
-    private record PathSegment(
-        String javaFieldName,
-        String indexPart
-    ) {}
 }

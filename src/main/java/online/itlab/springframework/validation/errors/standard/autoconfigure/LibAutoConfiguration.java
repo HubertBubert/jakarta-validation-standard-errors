@@ -18,7 +18,7 @@ public class LibAutoConfiguration {
     public IJakartaValidationProblemDetailFactory problemDetailFactory() {
         final IValidationPathFactory validationPathFactory = new ValidationPathFactory();
         return new JakartaValidationProblemDetailFactory(
-            new ReflectionTools(),
+            new ReflectionTools(validationPathFactory),
             new StringTools(),
             new WebRequestTools(),
             validationPathFactory
