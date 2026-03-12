@@ -2,6 +2,8 @@ package online.itlab.springframework.validation.errors.standard.autoconfigure;
 
 import online.itlab.springframework.validation.errors.standard.factory.IJakartaValidationProblemDetailFactory;
 import online.itlab.springframework.validation.errors.standard.factory.JakartaValidationProblemDetailFactory;
+import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
+import online.itlab.springframework.validation.errors.standard.factory.domain.ValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.tools.ReflectionTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.StringTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.WebRequestTools;
@@ -14,10 +16,12 @@ public class LibAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public IJakartaValidationProblemDetailFactory problemDetailFactory() {
+        final IValidationPathFactory validationPathFactory = new ValidationPathFactory();
         return new JakartaValidationProblemDetailFactory(
             new ReflectionTools(),
             new StringTools(),
-            new WebRequestTools()
+            new WebRequestTools(),
+            validationPathFactory
         );
     }
 }

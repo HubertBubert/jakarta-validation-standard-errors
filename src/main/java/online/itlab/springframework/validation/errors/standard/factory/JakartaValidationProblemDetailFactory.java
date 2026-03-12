@@ -1,5 +1,8 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
+import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
+import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory.ValidationPath;
+import online.itlab.springframework.validation.errors.standard.factory.domain.ValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IReflectionTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IStringTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IWebRequestTools;
@@ -41,13 +44,16 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     private final IReflectionTools reflectionTools;
     private final IStringTools stringTools;
     private final IWebRequestTools webRequestTools;
+    private final IValidationPathFactory validationPathFactory;
 
     public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools,
                                                  final IStringTools stringTools,
-                                                 final IWebRequestTools webRequestTools) {
+                                                 final IWebRequestTools webRequestTools,
+                                                 final IValidationPathFactory validationPathFactory) {
         this.reflectionTools = reflectionTools;
         this.stringTools = stringTools;
         this.webRequestTools = webRequestTools;
+        this.validationPathFactory = validationPathFactory;
     }
     /**
      * Creates an RFC 9457 error.
@@ -139,7 +145,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
 
 
-    private String detectSource(final Class<?> modelAttributeType, final WebRequest request, final String fieldName) {
+    private String detectSource(final Class<?> modelAttributeType, final WebRequest request, final String validationJavaPath) {
         final String unknown = "unknown";
         if (!modelAttributeType.isRecord()) {
             return unknown;    // return generic name - only records are supported currently
@@ -152,22 +158,28 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
 //        final String requestName = getRequestParamName(modelAttributeType, fieldName);
 
-        Field field = reflectionTools.findField(modelAttributeType, fieldName);
+        final ValidationPath validationPath = validationPathFactory.create(validationJavaPath);
+        Field field = reflectionTools.findField(modelAttributeType, validationPath.javaFieldName());
         final BindParam bindParam = field.getAnnotation(BindParam.class);
         final String requestName =  bindParam != null
             ? bindParam.value()
-            : fieldName;
+            : validationPath.javaFieldName();
 
         var source =  webRequestTools.resolveSource(request, field, requestName);
         return source;
     }
 
-    private String getRequestParamName(final Class<?> clazz, final String fieldJavaName) {
-        Field field = reflectionTools.findField(clazz, fieldJavaName);
+    /**
+     * validationJavaPath contains names of java fields. For
+     */
+    private String getRequestParamName(final Class<?> clazz, final String validationJavaPath) {
+        final ValidationPath validationPath = validationPathFactory.create(validationJavaPath);
+        Field field = reflectionTools.findField(clazz, validationPath.javaFieldName());
         final BindParam bindParam = field.getAnnotation(BindParam.class);
-        return bindParam != null
+        final String requestName = bindParam != null
             ? bindParam.value()
-            : field.getName();
+            : validationPath.javaFieldName();
+        return "%s%s".formatted(requestName, validationPath.indexPart());
     }
 
     @Override

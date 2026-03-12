@@ -73,12 +73,12 @@ public class ReflectionTools implements IReflectionTools {
         throw new IllegalStateException("Unexpected type: " + type);
     }
 
-    public Field findField(final Class<?> type, final String javaName) {
+    public Field findField(final Class<?> type, final String javaFieldName) {
         return Arrays.stream(type.getDeclaredFields())
-            .filter(field -> field.getName().equals(javaName))
+            .filter(field -> field.getName().equals(javaFieldName))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException(
-                "Field '%s' not found in %s".formatted(javaName, type.getName())
+                "Field '%s' not found in %s".formatted(javaFieldName, type.getName())
             ));
     }
 

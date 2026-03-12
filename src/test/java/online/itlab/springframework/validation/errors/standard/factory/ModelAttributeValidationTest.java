@@ -2,6 +2,7 @@ package online.itlab.springframework.validation.errors.standard.factory;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.bind.annotation.BindParam;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,35 +54,40 @@ public class ModelAttributeValidationTest {
         testedProblemFactory = autoConfiguration.problemDetailFactory();
     }
 
-//    Expected :{errors=[{path=id, rejectedValue=i, name=id, in=matrix, message=size must be between 2 and 5}]}
-//    Actual   :{errors=[{message=size must be between 2 and 5, path=id, in=body, rejectedValue=i}]}
-    // problems
-    // 1. in=body -> but should be path, query, header
-    // 2. errors should be the same like in path, query and header specific tests
+    public static void main(String ...args) {
+        var nameParameters = List.of("Alice", "Sharon");
+        var queryParams = nameParameters.stream()
+            .map(v -> "name=" + v)
+            .collect(Collectors.joining("&", "?", ""));
+        System.out.println(queryParams);
+    }
 
     @ParameterizedTest
     @MethodSource("singleCasesProvider")
     public void singleModelAttributeIncorrect(final String baseUrl,
                                               final String idParameter,
-                                              final String nameParameter,
+                                              final List<String> nameParameters,
                                               final String headerParameter,
                                               final String expectedIn,
                                               final String expectedName,
                                               final Object expectedRejectedValue,
                                               final String expectedMessage) {
+        var queryParams = nameParameters.stream()
+            .map(v -> "name=" + v)
+            .collect(Collectors.joining("&", "?", ""));
+        var url = baseUrl + "/%s%s".formatted(idParameter, queryParams);
 
-        var url = baseUrl + "/%s?name=%s".formatted(idParameter, nameParameter);
         var result = client.get()
             .uri(url)
             .header("header", headerParameter)
             .exchange()
+            .expectBody(ProblemDetail.class)
             .returnResult();
 
         var exception = controllerAdvice.getMethodArgumentNotValidException();
         var webRequest = controllerAdvice.getWebRequest();
         assertThat(exception).isNotNull();
         assertThat(webRequest).isNotNull();
-
 
         // when:
         var problemDetail = testedProblemFactory.getValidationError(exception, webRequest);
@@ -92,17 +102,18 @@ public class ModelAttributeValidationTest {
         assertThat(problemDetail.getDetail())
             .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
 
+        Map<String, Object> expectedErrorDetails = new HashMap<>();
+        expectedErrorDetails.put("in", expectedIn);
+        expectedErrorDetails.put("name", expectedName);
+        expectedErrorDetails.put("path", expectedName);
+        expectedErrorDetails.put("rejectedValue", expectedRejectedValue);
+        expectedErrorDetails.put("message", expectedMessage);
+
         Map<String, List<Map<String, Object>>> expected =
             Map.of(
                 "errors",
                 List.of(
-                    Map.of(
-                        "in", expectedIn,
-                        "name", expectedName,
-                        "path", expectedName,
-                        "rejectedValue", expectedRejectedValue,
-                        "message", expectedMessage
-                    )
+                    expectedErrorDetails
                 )
             );
 
@@ -114,7 +125,7 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/noname",
                 "i",
-                "name",
+                List.of("name"),
                 "header",
                 "path",
                 "id",
@@ -124,7 +135,7 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/noname",
                 "id",
-                "    ",
+                List.of("    "),
                 "header",
                 "query",
                 "name",
@@ -134,7 +145,7 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/noname",
                 "id",
-                "name",
+                List.of("name"),
                 "longHeader",
                 "header",
                 "header",
@@ -144,7 +155,7 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/renamed",
                 "i",
-                "name",
+                List.of("name"),
                 "header",
                 "path",
                 "id",
@@ -154,7 +165,7 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/renamed",
                 "id",
-                "    ",
+                List.of("    "),
                 "header",
                 "query",
                 "name",
@@ -164,12 +175,52 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/renamed",
                 "id",
-                "name",
+                List.of("name"),
                 "longHeader",
                 "header",
                 "header",
                 "longHeader",
                 "size must be between 1 and 6"
+            ),
+            arguments(
+                "/test/noname/list",
+                "id",
+                List.of("name1", "   ", "name3"),
+                "header",
+                "query",
+                "name[1]",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/list",
+                "id",
+                List.of("name1", "   ", "name3"),
+                "header",
+                "query",
+                "name[1]",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/noname/set",
+                "id",
+                List.of("   ", "name2", "name3"),
+                "header",
+                "query",
+                "name[]",
+                "   ",
+                "must not be blank"
+            ),
+            arguments(
+                "/test/renamed/set",
+                "id",
+                List.of("   ", "name2", "name3"),
+                "header",
+                "query",
+                "name[]",
+                "   ",
+                "must not be blank"
             )
         );
     }
@@ -178,13 +229,17 @@ public class ModelAttributeValidationTest {
     @MethodSource("multipleCasesProvider")
     public void multipleModelAttributeIncorrect(final String baseUrl,
                                                 final String incorrectIdParameter,
-                                                final String incorrectNameParameter,
+                                                final List<String> incorrectNameParameters,
                                                 final String incorrectHeaderParameter,
                                                 final String expectedIdMessage,
+                                                final String expectedNameValue,
+                                                final String expectedNamePath,
                                                 final String expectedNameMessage,
                                                 final Object expectedHeaderMessage) {
-
-        var url = baseUrl + "/%s?name=%s".formatted(incorrectIdParameter, incorrectNameParameter);
+        var incorrectQueryParams = incorrectNameParameters.stream()
+            .map(v -> "name=" + v)
+            .collect(Collectors.joining("&", "?", ""));
+        var url = baseUrl + "/%s%s".formatted(incorrectIdParameter, incorrectQueryParams);
         client.get()
             .uri(url)
             .header("header", incorrectHeaderParameter)
@@ -217,9 +272,9 @@ public class ModelAttributeValidationTest {
             ),
             Map.of(
                 "in", "query",
-                "name", "name",
-                "path", "name",
-                "rejectedValue", incorrectNameParameter,
+                "name", expectedNamePath,
+                "path", expectedNamePath,
+                "rejectedValue", expectedNameValue,
                 "message", expectedNameMessage
             ),
             Map.of(
@@ -242,18 +297,44 @@ public class ModelAttributeValidationTest {
             arguments(
                 "/test/noname",
                 "i",
-                "    ",
+                List.of("   "),
                 "longHeader",
                 "size must be between 2 and 5",
+                "   ",
+                "name",
                 "must not be blank",
                 "size must be between 1 and 6"
             ),
             arguments(
                 "/test/renamed",
                 "i",
-                "    ",
+                List.of("   "),
                 "longHeader",
                 "size must be between 2 and 5",
+                "   ",
+                "name",
+                "must not be blank",
+                "size must be between 1 and 6"
+            ),
+            arguments(
+                "/test/noname/list",
+                "i",
+                List.of("   ", "name2", "name3"),
+                "longHeader",
+                "size must be between 2 and 5",
+                "   ",
+                "name[0]",
+                "must not be blank",
+                "size must be between 1 and 6"
+            ),
+            arguments(
+                "/test/noname/set",
+                "i",
+                List.of("name1", "   ", "name3"),
+                "longHeader",
+                "size must be between 2 and 5",
+                "   ",
+                "name[]",
                 "must not be blank",
                 "size must be between 1 and 6"
             )
@@ -273,6 +354,26 @@ public class ModelAttributeValidationTest {
         String getRenamed(final @ModelAttribute @Valid Renamed renamed) {
             return "%s-%s-%s".formatted(renamed.identifier, renamed.fullName, renamed.headerValue);
         }
+
+        @GetMapping("/noname/list/{id}")
+        String getNoNameList(final @ModelAttribute @Valid NonameList noname) {
+            return "%s-%s-%s".formatted(noname.id, noname.name, noname.header);
+        }
+
+        @GetMapping("/renamed/list/{id}")
+        String getRenamedList(final @ModelAttribute @Valid RenamedList renamed) {
+            return "%s-%s-%s".formatted(renamed.identifier, renamed.names, renamed.headerValue);
+        }
+
+        @GetMapping("/noname/set/{id}")
+        String getNoNameSet(final @ModelAttribute @Valid NonameSet noname) {
+            return "%s-%s-%s".formatted(noname.id, noname.name, noname.header);
+        }
+
+        @GetMapping("/renamed/set/{id}")
+        String getRenamedSet(final @ModelAttribute @Valid RenamedSet renamed) {
+            return "%s-%s-%s".formatted(renamed.identifier, renamed.names, renamed.headerValue);
+        }
     }
 
     record Noname(
@@ -286,6 +387,30 @@ public class ModelAttributeValidationTest {
         String header                               // @RequestHeader
     ){}
 
+    record NonameList(
+        @Size(min = 2, max = 5)
+        String id,                                  // @PathVariable
+
+        @NotEmpty
+        List<@NotBlank @Size(min = 1, max = 100) String>
+            name,                                   // @RequestParam
+
+        @NotBlank @Size(min = 1, max = 6)
+        String header                               // @RequestHeader
+    ){}
+
+    record NonameSet(
+        @Size(min = 2, max = 5)
+        String id,                                  // @PathVariable
+
+        @NotEmpty
+        Set<@NotBlank @Size(min = 1, max = 100) String>
+            name,                                   // @RequestParam
+
+        @NotBlank @Size(min = 1, max = 6)
+        String header                               // @RequestHeader
+    ){}
+
     record Renamed(
         @BindParam("id")
         @Size(min = 2, max = 5)
@@ -294,6 +419,34 @@ public class ModelAttributeValidationTest {
         @BindParam("name")
         @NotBlank @Size(min = 1, max = 100)
         String fullName,
+
+        @BindParam("header")
+        @NotBlank @Size(min = 1, max = 6)
+        String headerValue
+    ){}
+
+    record RenamedList(
+        @BindParam("id")
+        @Size(min = 2, max = 5)
+        String identifier,
+
+        @BindParam("name")
+        @NotEmpty List<@NotBlank @Size(min = 1, max = 100) String>
+            names,
+
+        @BindParam("header")
+        @NotBlank @Size(min = 1, max = 6)
+        String headerValue
+    ){}
+
+    record RenamedSet(
+        @BindParam("id")
+        @Size(min = 2, max = 5)
+        String identifier,
+
+        @BindParam("name")
+        @NotEmpty Set<@NotBlank @Size(min = 1, max = 100) String>
+            names,
 
         @BindParam("header")
         @NotBlank @Size(min = 1, max = 6)
