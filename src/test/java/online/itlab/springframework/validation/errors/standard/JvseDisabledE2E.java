@@ -49,8 +49,9 @@ public class JvseDisabledE2E {
     @Test
     public void testBodyOnly() {
         // when
+        final var pathUri = "/e2e/bodyonly";
         var result = client
-            .post().uri("/e2e/bodyonly")
+            .post().uri(pathUri)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PROBLEM_JSON)
             .body(Person.builder()
@@ -70,6 +71,7 @@ public class JvseDisabledE2E {
         expectedProblemDetail.setTitle("Bad Request");
         expectedProblemDetail.setInstance(URI.create("/e2e/bodyonly"));
         expectedProblemDetail.setDetail("Invalid request content.");
+        expectedProblemDetail.setInstance(URI.create(pathUri));
 
         assertThat(problemDetail).isEqualTo(expectedProblemDetail);
     }
@@ -78,8 +80,9 @@ public class JvseDisabledE2E {
     @Test
     public void testMixed() {
         // when
+        final var pathUri = "/e2e/mixed/11";
         var result = client
-            .patch().uri("/e2e/mixed/11")
+            .patch().uri(pathUri)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PROBLEM_JSON)
             .body(Person.builder()
@@ -99,6 +102,7 @@ public class JvseDisabledE2E {
         expectedProblemDetail.setTitle("Bad Request");
         expectedProblemDetail.setInstance(URI.create("/e2e/mixed/11"));
         expectedProblemDetail.setDetail("Validation failure");
+        expectedProblemDetail.setInstance(URI.create(pathUri));
 
         assertThat(problemDetail).isEqualTo(expectedProblemDetail);
     }

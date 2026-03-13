@@ -49,8 +49,9 @@ public class JvseE2E {
     @Test
     public void testBodyOnly() {
         // when
+        final var pathUri = "/e2e/bodyonly";
         var result = client
-            .post().uri("/e2e/bodyonly")
+            .post().uri(pathUri)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PROBLEM_JSON)
             .body(Person.builder()
@@ -74,6 +75,8 @@ public class JvseE2E {
             .isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(problemDetail.getDetail())
             .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
+        assertThat(problemDetail.getInstance())
+            .isEqualTo(URI.create(pathUri));
 
         Map<String, List<Map<String, Object>>> expected =
             Map.of(
@@ -96,8 +99,9 @@ public class JvseE2E {
     @Test
     public void testMixed() {
         // when
+        final var pathUri = "/e2e/mixed/11";
         var result = client
-            .patch().uri("/e2e/mixed/11")
+            .patch().uri(pathUri)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PROBLEM_JSON)
             .body(Person.builder()
@@ -121,6 +125,8 @@ public class JvseE2E {
             .isEqualTo(HttpStatus.BAD_REQUEST.value());
         assertThat(problemDetail.getDetail())
             .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
+        assertThat(problemDetail.getInstance())
+            .isEqualTo(URI.create(pathUri));
 
         Map<String, List<Map<String, Object>>> expected =
             Map.of(
