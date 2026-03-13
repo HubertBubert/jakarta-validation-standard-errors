@@ -56,7 +56,7 @@ public abstract class JvseExceptionHandler extends ResponseEntityExceptionHandle
 
         if (jvseConfiguration.isEnabled()) {
             final ProblemDetail problem = problemFactory.getValidationError(exception, request);
-            return new ResponseEntity<>(problem, headers, status);
+            return handleExceptionInternal(exception, problem, headers, status, request);
         } else {
             return super.handleHandlerMethodValidationException(exception, headers, status, request);
         }
@@ -72,7 +72,7 @@ public abstract class JvseExceptionHandler extends ResponseEntityExceptionHandle
 
         if (jvseConfiguration.isEnabled()) {
             final ProblemDetail problem = problemFactory.getValidationError(exception);
-            return new ResponseEntity<>(problem, headers, status);
+            return handleExceptionInternal(exception, problem, headers, status, request);
         } else {
             return super.handleMissingServletRequestPart(exception, headers, status, request);
         }
