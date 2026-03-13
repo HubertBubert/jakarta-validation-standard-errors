@@ -9,22 +9,7 @@ No need to re-invent the wheel.
 
 ## Why to use this library
 
-**Spring Boot** has support for RFC 9457. It can automatically return validation errors in RFC 9457 format.
-All we need to do is to create a `@ControllerAdvice` which extends `ResponseEntityExceptionHandler`:
-```java
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
-@Getter
-@RestControllerAdvice
-public class OurControllerAdvice extends ResponseEntityExceptionHandler {
-    // no-op
-}
-```
-The problem is that these errors are:
-- cryptic
-- non-descriptive
-- non-actionable  
+**Spring Boot** has support for RFC 9457. It can automatically return validation errors in RFC 9457 format.  
 
 Standard Spring error example:
 ```json
@@ -36,10 +21,12 @@ Standard Spring error example:
 }
 ```
 
-Like we can see, `detail` field contains no details at all.  
-It does not help users at all to fix the incorrect request.
+The problem is that these errors are not helpful as they are:
+- cryptic
+- non-descriptive
+- non-actionable
 
-Here is the message produces by the library for the same request:
+Here is the message produced by the library for the same request:
 ```json
 {
   "type": "/problems/validation-failed",
@@ -80,6 +67,8 @@ Here is the message produces by the library for the same request:
 }
 ```
 
+Everything is now clear.
+
 ## Library features
 
 - provides full list of rejected values with `location` 
@@ -91,4 +80,28 @@ Here is the message produces by the library for the same request:
   Based on the Controller method signature, validation errors for `@RequestBody` and `@ModelAttribute`
   are reported in two different ways. This library guarantees the same error format regardless of the flow.
 
-  
+## How to use this library
+
+Just create a `@ConstrollerAdvice` and extend `JvseExceptionHandler` instead of `ResponseEntityExceptionHandler`
+provided by Spring.
+
+```java
+import online.itlab.springframework.validation.errors.standard.extension.JvseExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class JakartaStandardExceptionHandler extends JvseExceptionHandler {}
+```
+
+That's it!  
+Now you can configure the behavior to your liking.
+
+## Configuration
+
+All configuration options for the library are stored under the root key: `jvse`.
+
+Configuration options:
+
+| name           | type    | default value | description                                                                                     |
+|----------------|---------|---------------|-------------------------------------------------------------------------------------------------|
+| `jvse.enabled` | boolean | `true`        | Enables or disables the library. <br>When disabled it produces standard Spring RFC 9457 errors. |
