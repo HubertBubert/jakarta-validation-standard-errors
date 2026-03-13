@@ -36,7 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     classes = JvseValuesE2E.TestApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
-        "jvse.values.type=/type",
+        "jvse.values.type.base=https://example.com",
+        "jvse.values.type.path=/type",
         "jvse.values.title=title",
         "jvse.values.detail=detail",
         "jvse.values.status=UNPROCESSABLE_CONTENT"
@@ -71,7 +72,7 @@ public class JvseValuesE2E {
 
         // then
         assertThat(problemDetail.getType())
-            .isEqualTo(URI.create("/type"));
+            .isEqualTo(URI.create("https://example.com/type"));
         assertThat(problemDetail.getTitle())
             .isEqualTo("title");
         assertThat(problemDetail.getStatus())
@@ -121,7 +122,7 @@ public class JvseValuesE2E {
 
         // then
         assertThat(problemDetail.getType())
-            .isEqualTo(URI.create("/type"));
+            .isEqualTo(URI.create("https://example.com/type"));
         assertThat(problemDetail.getTitle())
             .isEqualTo("title");
         assertThat(problemDetail.getStatus())

@@ -9,7 +9,6 @@ import online.itlab.springframework.validation.errors.standard.factory.tools.IWe
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.MethodParameter;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -30,7 +29,6 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -62,7 +60,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     private ProblemDetail createProblemDetail() {
         final ProblemDetail problem = ProblemDetail.forStatus(valuesConfig.getStatus());
 
-        problem.setType(valuesConfig.getType());
+        problem.setType(valuesConfig.getType().getAbsolute());
         problem.setTitle(valuesConfig.getTitle());
         problem.setDetail(valuesConfig.getDetail());
 

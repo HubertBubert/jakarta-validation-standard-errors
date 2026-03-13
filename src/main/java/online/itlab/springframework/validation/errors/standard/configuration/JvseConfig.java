@@ -25,9 +25,25 @@ public class JvseConfig {
     @Setter
     @ToString
     public static class ValuesConfig {
-        private URI type = URI.create("/problems/validation-failed");
+        @NestedConfigurationProperty
+        private ValuesConfigType type = new ValuesConfigType();
+
         private String title = "Request Validation Failed";
         private String detail = "Request has one or more validation errors. Please fix them and try again.";
         private HttpStatus status = HttpStatus.BAD_REQUEST;
     }
+
+    @Setter
+    @ToString
+    public static class ValuesConfigType {
+        private URI base = null;
+        private URI path = URI.create("/problems/validation-failed");
+
+        public URI getAbsolute() {
+            return base == null
+                ? path
+                : base.resolve(path);
+        }
+    }
+
 }
