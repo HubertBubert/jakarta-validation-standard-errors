@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,8 +23,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class RequestHeaderValidationTest {
@@ -45,7 +44,7 @@ public class RequestHeaderValidationTest {
 
         // logic configuration
         JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
-        testedProblemFactory = autoConfiguration.problemDetailFactory();
+        testedProblemFactory = autoConfiguration.problemDetailFactory(new JvseConfig());
     }
 
     @ParameterizedTest

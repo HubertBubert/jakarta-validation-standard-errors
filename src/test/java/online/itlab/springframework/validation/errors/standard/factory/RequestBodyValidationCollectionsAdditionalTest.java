@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,7 +51,7 @@ public class RequestBodyValidationCollectionsAdditionalTest {
 
         // logic configuration
         JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
-        testedProblemFactory = autoConfiguration.problemDetailFactory();
+        testedProblemFactory = autoConfiguration.problemDetailFactory(new JvseConfig());
     }
 
     @ParameterizedTest

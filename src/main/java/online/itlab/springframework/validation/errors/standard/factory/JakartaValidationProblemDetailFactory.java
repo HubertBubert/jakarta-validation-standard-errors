@@ -1,8 +1,8 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig.ValuesConfig;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory.ValidationPath;
-import online.itlab.springframework.validation.errors.standard.factory.domain.ValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IReflectionTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IStringTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IWebRequestTools;
@@ -41,20 +41,34 @@ import java.util.function.Function;
 
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
 
+    private final ValuesConfig valuesConfig;
     private final IReflectionTools reflectionTools;
     private final IStringTools stringTools;
     private final IWebRequestTools webRequestTools;
     private final IValidationPathFactory validationPathFactory;
 
-    public JakartaValidationProblemDetailFactory(final IReflectionTools reflectionTools,
+    public JakartaValidationProblemDetailFactory(final ValuesConfig valuesConfig,
+                                                 final IReflectionTools reflectionTools,
                                                  final IStringTools stringTools,
                                                  final IWebRequestTools webRequestTools,
                                                  final IValidationPathFactory validationPathFactory) {
+        this.valuesConfig = valuesConfig;
         this.reflectionTools = reflectionTools;
         this.stringTools = stringTools;
         this.webRequestTools = webRequestTools;
         this.validationPathFactory = validationPathFactory;
     }
+
+    private ProblemDetail createProblemDetail() {
+        final ProblemDetail problem = ProblemDetail.forStatus(valuesConfig.getStatus());
+
+        problem.setType(valuesConfig.getType());
+        problem.setTitle(valuesConfig.getTitle());
+        problem.setDetail(valuesConfig.getDetail());
+
+        return problem;
+    }
+
     /**
      * Creates an RFC 9457 error.
      * This function handles a Spring exception thrown automatically when Controller method fails validation.
@@ -65,11 +79,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     @Override
     public ProblemDetail getValidationError(final MethodArgumentNotValidException exception,
                                             final WebRequest request) {
-        final ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-
-        problem.setType(URI.create("/problems/validation-failed"));
-        problem.setTitle("Request Validation Failed");
-        problem.setDetail("Request has one or more validation errors. Please fix them and try again.");
+        final ProblemDetail problem = createProblemDetail();
 
         // - exception.getParameter()
         //   It represents the Controller method parameter which failed the validation.
@@ -184,10 +194,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
     @Override
     public ProblemDetail getValidationError(final HandlerMethodValidationException exception, final WebRequest request) {
-        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        pd.setType(URI.create("/problems/validation-failed"));
-        pd.setTitle("Request Validation Failed");
-        pd.setDetail("Request has one or more validation errors. Please fix them and try again.");
+        ProblemDetail pd = createProblemDetail();
 
 //        if (request instanceof ServletWebRequest swr) {
 //            HttpServletRequest r = swr.getRequest();
@@ -295,10 +302,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     // Missing @RequestPart
     @Override
     public ProblemDetail getValidationError(final MissingServletRequestPartException exception) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problemDetail.setType(URI.create("/problems/validation-failed"));
-        problemDetail.setTitle("Request Validation Failed");
-        problemDetail.setDetail("Request has one or more validation errors. Please fix them and try again.");
+        ProblemDetail problemDetail = createProblemDetail();
 
         Locale locale = LocaleContextHolder.getLocale();
 

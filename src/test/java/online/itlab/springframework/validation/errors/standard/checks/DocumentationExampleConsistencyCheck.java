@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig;
 import online.itlab.springframework.validation.errors.standard.factory.IJakartaValidationProblemDetailFactory;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,7 @@ public class DocumentationExampleConsistencyCheck {
 
         // logic configuration
         JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
-        testedProblemFactory = autoConfiguration.problemDetailFactory();
+        testedProblemFactory = autoConfiguration.problemDetailFactory(new JvseConfig());
     }
 
     /*

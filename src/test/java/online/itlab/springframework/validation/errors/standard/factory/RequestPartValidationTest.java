@@ -2,6 +2,7 @@ package online.itlab.springframework.validation.errors.standard.factory;
 
 import jakarta.validation.constraints.Size;
 import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -49,7 +50,7 @@ public class RequestPartValidationTest {
 
         // logic configuration
         JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
-        testedProblemFactory = autoConfiguration.problemDetailFactory();
+        testedProblemFactory = autoConfiguration.problemDetailFactory(new JvseConfig());
     }
 
     @ParameterizedTest

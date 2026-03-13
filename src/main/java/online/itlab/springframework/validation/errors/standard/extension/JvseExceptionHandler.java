@@ -1,6 +1,6 @@
 package online.itlab.springframework.validation.errors.standard.extension;
 
-import online.itlab.springframework.validation.errors.standard.configuration.JvseConfiguration;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig;
 import online.itlab.springframework.validation.errors.standard.factory.IJakartaValidationProblemDetailFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public abstract class JvseExceptionHandler extends ResponseEntityExceptionHandler {
 
     private IJakartaValidationProblemDetailFactory problemFactory;
-    private JvseConfiguration jvseConfiguration;
+    private JvseConfig jvseConfiguration;
 
     @Autowired
     public final void setLogRepository(final IJakartaValidationProblemDetailFactory problemFactory) {
@@ -24,7 +24,7 @@ public abstract class JvseExceptionHandler extends ResponseEntityExceptionHandle
     }
 
     @Autowired
-    public final void JvseConfiguration(final JvseConfiguration jvseConfiguration) {
+    public final void JvseConfiguration(final JvseConfig jvseConfiguration) {
         this.jvseConfiguration = jvseConfiguration;
     }
 
