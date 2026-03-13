@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,7 +47,7 @@ public class RequestBodyValidationCollectionsTest {
             }).build();
 
         // logic configuration
-        LibAutoConfiguration autoConfiguration = new LibAutoConfiguration();
+        JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
         testedProblemFactory = autoConfiguration.problemDetailFactory();
     }
 

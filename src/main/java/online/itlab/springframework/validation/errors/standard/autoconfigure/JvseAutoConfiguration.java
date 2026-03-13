@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @EnableConfigurationProperties(JvseConfiguration.class)
-public class LibAutoConfiguration {
+public class JvseAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public IJakartaValidationProblemDetailFactory problemDetailFactory() {

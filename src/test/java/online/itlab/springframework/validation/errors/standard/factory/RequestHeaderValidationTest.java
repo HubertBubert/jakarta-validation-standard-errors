@@ -3,7 +3,7 @@ package online.itlab.springframework.validation.errors.standard.factory;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import online.itlab.springframework.validation.errors.standard.autoconfigure.LibAutoConfiguration;
+import online.itlab.springframework.validation.errors.standard.autoconfigure.JvseAutoConfiguration;
 import online.itlab.springframework.validation.errors.standard.factory.helper.CapturingExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,7 +44,7 @@ public class RequestHeaderValidationTest {
             }).build();
 
         // logic configuration
-        LibAutoConfiguration autoConfiguration = new LibAutoConfiguration();
+        JvseAutoConfiguration autoConfiguration = new JvseAutoConfiguration();
         testedProblemFactory = autoConfiguration.problemDetailFactory();
     }
 
