@@ -102,6 +102,10 @@ All configuration options for the library are stored under the root key: `jvse`.
 
 Configuration options:
 
-| name           | type    | default value | description                                                                                     |
-|----------------|---------|---------------|-------------------------------------------------------------------------------------------------|
-| `jvse.enabled` | boolean | `true`        | Enables or disables the library. <br>When disabled it produces standard Spring RFC 9457 errors. |
+| name                 | type       | default value                                                               | description                                                                                     |
+|----------------------|------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `jvse.enabled`       | boolean    | `true`                                                                      | Enables or disables the library. <br>When disabled it produces standard Spring RFC 9457 errors. |
+| `jvse.values.type`   | URI        | `/problems/validation-failed`                                               | Value for `error.type` field.                                                                   |
+| `jvse.values.title`  | String     | `Request Validation Failed`                                                 | Value for `error.title` field.                                                                  |
+| `jvse.values.detail` | String     | `Request has one or more validation errors. Please fix them and try again.` | Value for `error.detail` field.                                                                 |
+| `jvse.values.status` | HttpStatus | `BAD_REQUEST`                                                               | Value for `error.status` field.                                                                 |
