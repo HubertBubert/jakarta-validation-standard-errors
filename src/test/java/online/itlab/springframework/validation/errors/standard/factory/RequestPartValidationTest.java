@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -97,17 +98,18 @@ public class RequestPartValidationTest {
         assertThat(problemDetail.getDetail())
             .isEqualTo("Request has one or more validation errors. Please fix them and try again.");
 
-        Map<String, List<Map<String, String>>> expected =
+        final Map<String, Object> errorDetailsMap = new HashMap<>();
+        errorDetailsMap.put("in", "part");
+        errorDetailsMap.put("name", disabledPart);
+        errorDetailsMap.put("path", disabledPart);
+        errorDetailsMap.put("rejectedValue", null);
+        errorDetailsMap.put("message", "Required part is not present.");
+
+        Map<String, List<Map<String, Object>>> expected =
             Map.of(
                 "errors",
                 List.of(
-                    Map.of(
-                        "in", "part",
-                        "name", disabledPart,
-//                        "path", expectedName,
-                        "rejectedValue", "(no value)",
-                        "message", "Required part is not present."
-                    )
+                    errorDetailsMap
                 )
             );
 

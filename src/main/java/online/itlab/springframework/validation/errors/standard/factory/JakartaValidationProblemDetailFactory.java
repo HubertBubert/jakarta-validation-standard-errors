@@ -303,16 +303,14 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         Locale locale = LocaleContextHolder.getLocale();
 
         // optional custom fields
-        final List<Map<String, Object>> errors = List.of(
-            Map.of(
-                "in", "part",
-                "name", exception.getRequestPartName(),
-                "message", "Required part is not present.",
-                "rejectedValue", "(no value)"
-            )
-        );
+        final Map<String, Object> errorDetails = new LinkedHashMap<>();
+        errorDetails.put("in", "part");                 // path/query/header/...
+        errorDetails.put("name", exception.getRequestPartName());         // HTTP-level name: id, firstName, ...
+        errorDetails.put("path", exception.getRequestPartName());             // includes [index]/[key] if applicable
+        errorDetails.put("rejectedValue", null);
+        errorDetails.put("message", "Required part is not present.");
 
-        problemDetail.setProperty("errors", errors);
+        problemDetail.setProperty("errors", List.of(errorDetails));
 
         return problemDetail;
     }
