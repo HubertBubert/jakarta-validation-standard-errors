@@ -1,28 +1,5 @@
 ## Known issues
 
-- `@ModelAttribute` does not support different names
-  ```java
-  @GetMapping("/renamed/{id}")
-  String getNoName(final @ModelAttribute @Valid Renamed renamed) {
-      return "%s-%s-%s".formatted(renamed.identifier, renamed.fullName, renamed.headerValue);
-  }  
-  ```
-  ```java
-  record Renamed(
-      @PathVariable("id")
-      @Size(min = 2, max = 5)
-      String identifier,
-  
-      @RequestParam("name")
-      @NotBlank @Size(min = 1, max = 100)
-      String fullName,
-  
-      @RequestHeader("header")
-      @NotBlank @Size(min = 1, max = 6)
-      String headerValue
-  ){}
-  ```
-  Problem: all values are null.
 - `RestTestClient` does not set multiple cookies right
   ```java
   client.get()

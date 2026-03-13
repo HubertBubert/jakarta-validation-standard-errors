@@ -1,4 +1,4 @@
-package online.itlab.springframework.validation.errors.standard;
+package online.itlab.springframework.validation.errors.standard.checks;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * This test checks if the message produced by the library is the same as specified in the README.md.

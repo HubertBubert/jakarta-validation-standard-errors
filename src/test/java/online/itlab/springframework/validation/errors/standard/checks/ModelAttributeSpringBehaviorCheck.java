@@ -1,4 +1,4 @@
-package online.itlab.springframework.validation.errors.standard;
+package online.itlab.springframework.validation.errors.standard.checks;
 
 import jakarta.servlet.http.Cookie;
 import lombok.Builder;
