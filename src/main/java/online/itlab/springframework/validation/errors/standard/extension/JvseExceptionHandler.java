@@ -13,7 +13,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-public abstract class StandardErrorsExceptionHandler extends ResponseEntityExceptionHandler {
+public abstract class JvseExceptionHandler extends ResponseEntityExceptionHandler {
 
     private IJakartaValidationProblemDetailFactory problemFactory;
     private JvseConfiguration jvseConfiguration;
@@ -28,7 +28,7 @@ public abstract class StandardErrorsExceptionHandler extends ResponseEntityExcep
         this.jvseConfiguration = jvseConfiguration;
     }
 
-    public StandardErrorsExceptionHandler() {
+    public JvseExceptionHandler() {
         super();
     }
 

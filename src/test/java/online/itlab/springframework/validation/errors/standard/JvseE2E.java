@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import online.itlab.springframework.validation.errors.standard.extension.StandardErrorsExceptionHandler;
+import online.itlab.springframework.validation.errors.standard.extension.JvseExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -165,7 +165,7 @@ public class JvseE2E {
         }
 
         @RestControllerAdvice
-        public class JakartaStandardExceptionHandler extends StandardErrorsExceptionHandler {}
+        public class JakartaStandardExceptionHandler extends JvseExceptionHandler {}
     }
 
     @Builder
