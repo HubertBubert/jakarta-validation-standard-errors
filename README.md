@@ -71,14 +71,20 @@ Everything is now clear.
 
 ## Library features
 
-- provides full list of rejected values with `location` 
-- error details use HTTP request names, not java class field names reported by Jakarta Validation  
-  Supported name annotations are:
-  - `@JsonProperty` for `@RequestBody`
-  - `@BindParam` for `@ModelAttribute`
+- provides full list of _error details_  
+  Each _error detail_ describes one validation failure.
+- API first error details   
+  Error detail MUST use API names, not internal implementation names reported by Jakarta Validation.  
+  This library translates Jakarta Validation names to API names.  
+  See [details](#restoring-api-names).
 - hides **Spring** validation flow ambiguity  
-  Based on the Controller method signature, validation errors for `@RequestBody` and `@ModelAttribute`
-  are reported in two different ways. This library guarantees the same error format regardless of the flow.
+  Based on the Controller method signature, validation errors for
+  - path params
+  - query params
+  - headers
+  - body    
+  
+  are reported in two different ways. This library guarantees the same, consistent error format regardless of the flow.
 
 ## How to use this library
 
@@ -139,5 +145,10 @@ The actual production setup may significantly differ between deployments.
 If the domain is static and known before the deployment the `jvse.values.type.base` can be set.  
 This guarantees the absolute URI in the `error.type` field.
 
-
+## Library internals
+### Restoring API names
+The library restores API names directly from annotations like `@PathVariable`, `@RequestParam` etc.
+In case of:
+- `@RequestBody` from `@JsonProperty`
+- `@ModelAttribute` from `@BindParam` 
 
