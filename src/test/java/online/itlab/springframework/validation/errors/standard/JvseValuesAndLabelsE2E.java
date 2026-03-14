@@ -33,18 +33,23 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(
-    classes = JvseValuesE2E.TestApplication.class,
+    classes = JvseValuesAndLabelsE2E.TestApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
         "jvse.values.type.base=https://example.com",
         "jvse.values.type.path=/type",
         "jvse.values.title=title",
         "jvse.values.detail=detail",
-        "jvse.values.status=UNPROCESSABLE_CONTENT"
+        "jvse.values.status=UNPROCESSABLE_CONTENT",
+        "jvse.labels.in=location",
+        "jvse.labels.name=fieldName",
+        "jvse.labels.path=fieldPath",
+        "jvse.labels.rejectedValue=failedValue",
+        "jvse.labels.message=validationMessage"
     }
 )
 @AutoConfigureRestTestClient
-public class JvseValuesE2E {
+public class JvseValuesAndLabelsE2E {
 
     @Autowired
     private RestTestClient client;
@@ -87,11 +92,11 @@ public class JvseValuesE2E {
                 "errors",
                 List.of(
                     Map.of(
-                        "in", "body",
-                        "name", "height",
-                        "path", "height",
-                        "rejectedValue", 0,
-                        "message", "must be greater than 0"
+                        "location", "body",
+                        "fieldName", "height",
+                        "fieldPath", "height",
+                        "failedValue", 0,
+                        "validationMessage", "must be greater than 0"
                     )
                 )
             );
@@ -137,11 +142,11 @@ public class JvseValuesE2E {
                 "errors",
                 List.of(
                     Map.of(
-                        "in", "body",
-                        "name", "firstName",
-                        "path", "firstName",
-                        "rejectedValue", "   ",
-                        "message", "must not be blank"
+                        "location", "body",
+                        "fieldName", "firstName",
+                        "fieldPath", "firstName",
+                        "failedValue", "   ",
+                        "validationMessage", "must not be blank"
                     )
                 )
             );

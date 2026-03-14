@@ -23,6 +23,7 @@ public class JvseAutoConfiguration {
     public IJakartaValidationProblemDetailFactory problemDetailFactory(final JvseConfig configuration) {
         final IValidationPathFactory validationPathFactory = new ValidationPathFactory();
         return new JakartaValidationProblemDetailFactory(
+            configuration.getLabels(),
             configuration.getValues(),
             new ReflectionTools(validationPathFactory),
             new StringTools(),

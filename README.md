@@ -99,17 +99,26 @@ Now you can configure the behavior to your liking.
 ## Configuration
 
 All configuration options for the library are stored under the root key: `jvse`.
+In general:
+- `jvse.values.*` define values for standard error fields specified by RFC 9457
+- `jvse.labels.*` define labels for a custom error detail format (RFC 9457 does not specify it)
 
 Configuration options:
 
-| name                     | type       | default value                                                               | description                                                                                     |
-|--------------------------|------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| `jvse.enabled`           | boolean    | `true`                                                                      | Enables or disables the library. <br>When disabled it produces standard Spring RFC 9457 errors. |
-| `jvse.values.type.base`  | URI        | null                                                                        | Used to build value for the `error.type` field.                                                 |
-| `jvse.values.type.value` | URI        | `/problems/validation-failed`                                               | Used to build value for the `error.type` field.                                                 |
-| `jvse.values.title`      | String     | `Request Validation Failed`                                                 | Value for the `error.title` field.                                                              |
-| `jvse.values.detail`     | String     | `Request has one or more validation errors. Please fix them and try again.` | Value for the `error.detail` field.                                                             |
-| `jvse.values.status`     | HttpStatus | `BAD_REQUEST`                                                               | Value for the `error.status` field.                                                             |
+| name                        | type       | default value                                                               | description                                                                                     |
+|-----------------------------|------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `jvse.enabled`              | boolean    | `true`                                                                      | Enables or disables the library. <br>When disabled it produces standard Spring RFC 9457 errors. |
+| `jvse.values.type.base`     | URI        | null                                                                        | Used to build value for the `error.type` field.                                                 |
+| `jvse.values.type.value`    | URI        | `/problems/validation-failed`                                               | Used to build value for the `error.type` field.                                                 |
+| `jvse.values.title`         | String     | `Request Validation Failed`                                                 | Value for the `error.title` field.                                                              |
+| `jvse.values.detail`        | String     | `Request has one or more validation errors. Please fix them and try again.` | Value for the `error.detail` field.                                                             |
+| `jvse.values.status`        | HttpStatus | `BAD_REQUEST`                                                               | Value for the `error.status` field.                                                             |
+| `jvse.labels.in`            | String     | `in`                                                                        | Error detail: location of the incorrect value in the request.                                   |
+| `jvse.labels.name`          | String     | `name`                                                                      | Error detail: name of the incorrect value.                                                      |
+| `jvse.labels.path`          | String     | `path`                                                                      | Error detail: path to the the incorrect value.                                                  |
+| `jvse.labels.message`       | String     | `message`                                                                   | Error detail: Jakarta Validation message.                                                       |
+| `jvse.labels.rejectedValue` | String     | `rejectedValue`                                                             | Error detail: the actual value which failed the validation.                                     |
+
 
 ### error.type
 
@@ -119,4 +128,6 @@ The actual production setup may significantly differ between deployments.
 
 If the domain is static and known before the deployment the `jvse.values.type.base` can be set.  
 This guarantees the absolute URI in the `error.type` field.
+
+
 

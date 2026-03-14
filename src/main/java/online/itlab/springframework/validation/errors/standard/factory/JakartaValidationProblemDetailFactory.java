@@ -1,5 +1,7 @@
 package online.itlab.springframework.validation.errors.standard.factory;
 
+import lombok.Builder;
+import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig.LabelsConfig;
 import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig.ValuesConfig;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory.ValidationPath;
@@ -39,17 +41,20 @@ import java.util.function.Function;
 
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
 
+    private final LabelsConfig labelsConfig;
     private final ValuesConfig valuesConfig;
     private final IReflectionTools reflectionTools;
     private final IStringTools stringTools;
     private final IWebRequestTools webRequestTools;
     private final IValidationPathFactory validationPathFactory;
 
-    public JakartaValidationProblemDetailFactory(final ValuesConfig valuesConfig,
+    public JakartaValidationProblemDetailFactory(final LabelsConfig labelsConfig,
+                                                 final ValuesConfig valuesConfig,
                                                  final IReflectionTools reflectionTools,
                                                  final IStringTools stringTools,
                                                  final IWebRequestTools webRequestTools,
                                                  final IValidationPathFactory validationPathFactory) {
+        this.labelsConfig = labelsConfig;
         this.valuesConfig = valuesConfig;
         this.reflectionTools = reflectionTools;
         this.stringTools = stringTools;
@@ -65,6 +70,25 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         problem.setDetail(valuesConfig.getDetail());
 
         return problem;
+    }
+
+    @Builder
+    private record ErrorDetail (
+        String in,
+        String name,
+        String path,
+        String message,
+        Object rejectedValue
+    ) {
+        Map<String, Object> toMap(final LabelsConfig labelsConfig) {
+            final Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put(labelsConfig.getIn(), in);
+            errorDetails.put(labelsConfig.getName(), name);
+            errorDetails.put(labelsConfig.getPath(), path);
+            errorDetails.put(labelsConfig.getMessage(), message);
+            errorDetails.put(labelsConfig.getRejectedValue(), rejectedValue);
+            return errorDetails;
+        }
     }
 
     /**
@@ -109,13 +133,15 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             .map(err -> {
                 final String jsonPath = generators.path.apply(err.getField());
                 final String jsonName = stringTools.lastSegment(jsonPath, '.');
-                final Map<String, Object> errorDetails = new HashMap<>();
-                errorDetails.put("in", generators.in.apply(err.getField()));
-                errorDetails.put("name", jsonName);
-                errorDetails.put("path", jsonPath);
-                errorDetails.put("message", err.getDefaultMessage());
-                errorDetails.put("rejectedValue", err.getRejectedValue());      // can be null
-                return errorDetails;
+
+                return ErrorDetail.builder()
+                    .in(generators.in.apply(err.getField()))
+                    .name(jsonName)
+                    .path(jsonPath)
+                    .message(err.getDefaultMessage())
+                    .rejectedValue(err.getRejectedValue())
+                    .build()
+                    .toMap(labelsConfig);
             })
             .toList();
 
@@ -305,12 +331,14 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         Locale locale = LocaleContextHolder.getLocale();
 
         // optional custom fields
-        final Map<String, Object> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("in", "part");                 // path/query/header/...
-        errorDetails.put("name", exception.getRequestPartName());         // HTTP-level name: id, firstName, ...
-        errorDetails.put("path", exception.getRequestPartName());             // includes [index]/[key] if applicable
-        errorDetails.put("rejectedValue", null);
-        errorDetails.put("message", "Required part is not present.");
+        final Map<String, Object> errorDetails = ErrorDetail.builder()
+            .in("part")
+            .name(exception.getRequestPartName())
+            .path(exception.getRequestPartName())
+            .message("Required part is not present.")
+            .rejectedValue(null)
+            .build()
+            .toMap(labelsConfig);
 
         problemDetail.setProperty("errors", List.of(errorDetails));
 
@@ -340,13 +368,14 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             // String message = messageSource.getMessage(err, locale);
             String message = err.getDefaultMessage();
 
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("in", in);                 // path/query/header/...
-            m.put("name", httpName);         // HTTP-level name: id, firstName, ...
-            m.put("path", finalPath);             // includes [index]/[key] if applicable
-            m.put("rejectedValue", rejected);
-            m.put("message", message);
-            return m;
+            return ErrorDetail.builder()
+                .in(in)
+                .name(httpName)
+                .path(finalPath)
+                .rejectedValue(rejected)
+                .message(message)
+                .build()
+                .toMap(labelsConfig);
         }).toList();
     }
 
@@ -363,25 +392,32 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             final String name = stringTools.lastSegment(requestPath, '.');
             final String in = generators.in.apply(javaPath);
 
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("in", in);
-            m.put("name", name);            // for body/model attributes, field path is the public name
-            m.put("path", requestPath);
-            m.put("rejectedValue", fe.getRejectedValue());
-            m.put("message", message);
-            out.add(m);
+            out.add(
+                ErrorDetail.builder()
+                    .in(in)
+                    .name(name)
+                    .path(requestPath)
+                    .rejectedValue(fe.getRejectedValue())
+                    .message(message)
+                    .build()
+                    .toMap(labelsConfig)
+            );
         }
 
         for (ObjectError oe : pe.getGlobalErrors()) {
 //            String message = messageSource.getMessage(oe, locale);
             String message = oe.getDefaultMessage();
 
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("in", "dummy");
-            m.put("name", pe.getObjectName());
-            m.put("path", pe.getObjectName());
-            m.put("message", message);
-            out.add(m);
+            out.add(
+                ErrorDetail.builder()
+                    .in("dummy")                                        // TODO cannot be like this
+                    .name(pe.getObjectName())
+                    .path(pe.getObjectName())
+                    .rejectedValue(null)                                // TODO probably can be supplied
+                    .message(message)
+                    .build()
+                    .toMap(labelsConfig)
+            );
         }
 
         return out;

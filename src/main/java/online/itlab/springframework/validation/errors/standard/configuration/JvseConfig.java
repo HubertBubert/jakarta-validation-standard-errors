@@ -21,6 +21,9 @@ public class JvseConfig {
     @NestedConfigurationProperty
     private ValuesConfig values = new ValuesConfig();
 
+    @NestedConfigurationProperty
+    private LabelsConfig labels = new LabelsConfig();
+
     @Getter
     @Setter
     @ToString
@@ -31,6 +34,17 @@ public class JvseConfig {
         private String title = "Request Validation Failed";
         private String detail = "Request has one or more validation errors. Please fix them and try again.";
         private HttpStatus status = HttpStatus.BAD_REQUEST;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class LabelsConfig {
+        private String in = "in";
+        private String name = "name";
+        private String path = "path";
+        private String message = "message";
+        private String rejectedValue = "rejectedValue";
     }
 
     @Setter
