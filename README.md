@@ -82,6 +82,14 @@ Everything is now clear.
 
 ## How to use this library
 
+### Pre-requirements
+
+This library requires _Spring MVC built-in support for method validation_, therefore:
+- Spring version `6.1` or higher
+- controllers are not marked with the `@Validated` annotation  
+  See [documentation](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html)
+
+### Usage
 Just create a `@ConstrollerAdvice` and extend `JvseExceptionHandler` instead of `ResponseEntityExceptionHandler`
 provided by Spring.
 
@@ -101,7 +109,7 @@ Now you can configure the behavior to your liking.
 All configuration options for the library are stored under the root key: `jvse`.
 In general:
 - `jvse.values.*` define values for standard error fields specified by RFC 9457
-- `jvse.labels.*` define labels for a custom error detail format (RFC 9457 does not specify it)
+- `jvse.labels.*` define labels for a custom _error detail_ format (RFC 9457 does not specify it)
 
 Configuration options:
 
@@ -119,6 +127,8 @@ Configuration options:
 | `jvse.labels.message`       | String     | `message`                                                                   | Error detail: Jakarta Validation message.                                                       |
 | `jvse.labels.rejectedValue` | String     | `rejectedValue`                                                             | Error detail: the actual value which failed the validation.                                     |
 
+TODO:
+- describe the catalog of `in` values
 
 ### error.type
 
