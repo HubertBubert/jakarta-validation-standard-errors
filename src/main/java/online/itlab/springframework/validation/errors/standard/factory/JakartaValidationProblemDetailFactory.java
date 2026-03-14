@@ -5,6 +5,7 @@ import online.itlab.springframework.validation.errors.standard.configuration.Jvs
 import online.itlab.springframework.validation.errors.standard.configuration.JvseConfig.ValuesConfig;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory;
 import online.itlab.springframework.validation.errors.standard.factory.domain.IValidationPathFactory.ValidationPath;
+import online.itlab.springframework.validation.errors.standard.factory.domain.types.In;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IReflectionTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IStringTools;
 import online.itlab.springframework.validation.errors.standard.factory.tools.IWebRequestTools;
@@ -33,11 +34,21 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.BODY;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.COOKIE;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.DUMMY;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.HEADER;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.MATRIX;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PARAMETER;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PART;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PATH;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.QUERY;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.UNKNOWN;
 
 public class JakartaValidationProblemDetailFactory implements IJakartaValidationProblemDetailFactory {
 
@@ -74,7 +85,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
     @Builder
     private record ErrorDetail (
-        String in,
+        In in,
         String name,
         String path,
         String message,
@@ -82,7 +93,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     ) {
         Map<String, Object> toMap(final LabelsConfig labelsConfig) {
             final Map<String, Object> errorDetails = new HashMap<>();
-            errorDetails.put(labelsConfig.getIn(), in);
+            errorDetails.put(labelsConfig.getIn(), in.value);
             errorDetails.put(labelsConfig.getName(), name);
             errorDetails.put(labelsConfig.getPath(), path);
             errorDetails.put(labelsConfig.getMessage(), message);
@@ -152,7 +163,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     }
 
     private record MethodArgumentGenerators(
-        Function<String, String> in,
+        Function<String, In> in,
         Function<String, String> path
     ) {}
 
@@ -160,7 +171,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
                                                    final WebRequest request) {
         if (failedMethodParameter.hasParameterAnnotation(RequestBody.class)) {
             return new MethodArgumentGenerators(
-                (failedFieldJavaPath) -> "body",
+                (failedFieldJavaPath) -> In.BODY,
                 (failedFieldJavaPath) -> reflectionTools.toJsonPath(failedMethodParameter.getParameterType(), failedFieldJavaPath)
             );
         } else if (failedMethodParameter.hasParameterAnnotation(ModelAttribute.class)) {
@@ -169,8 +180,9 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
                 (failedFieldJavaPath) -> getRequestParamName(failedMethodParameter.getParameterType(), failedFieldJavaPath)
             );
         } else {
+            // TODO is this a valid logic ? - can it be even reached? - evaluate
             return new MethodArgumentGenerators(
-                (failedFieldJavaPath) -> "parameters",
+                (failedFieldJavaPath) -> PARAMETER,
                 (failedFieldJavaPath) -> failedFieldJavaPath
             );
         }
@@ -179,10 +191,9 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
 
 
-    private String detectSource(final Class<?> modelAttributeType, final WebRequest request, final String validationJavaPath) {
-        final String unknown = "unknown";
+    private In detectSource(final Class<?> modelAttributeType, final WebRequest request, final String validationJavaPath) {
         if (!modelAttributeType.isRecord()) {
-            return unknown;    // return generic name - only records are supported currently
+            return UNKNOWN;    // return generic name - only records are supported currently
         }
 
         // 1. javaFieldName -> requestName
@@ -233,7 +244,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void pathVariable(PathVariable ann, ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "path",
+                    PATH,
                     httpNameForPathVariable(ann, r),
                     r,
                     locale
@@ -243,7 +254,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void requestParam(@Nullable RequestParam ann, ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "query",
+                    QUERY,
                     httpNameForRequestParam(ann, r),
                     r,
                     locale
@@ -253,7 +264,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void matrixVariable(MatrixVariable ann, ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "matrix",
+                    MATRIX,
                     httpNameForMatrixVariable(ann, r),
                     r,
                     locale
@@ -263,7 +274,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void requestHeader(RequestHeader ann, ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "header",
+                    HEADER,
                     httpNameForRequestHeader(ann, r),
                     r,
                     locale
@@ -273,7 +284,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void cookieValue(CookieValue ann, ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "cookie",
+                    COOKIE,
                     httpNameForCookieValue(ann, r),
                     r,
                     locale
@@ -292,7 +303,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void requestBody(RequestBody ann, ParameterErrors pe) {
                 final var bodyRequestGenerators = new MethodArgumentGenerators(
-                    (failedFieldJavaPath) -> "body",
+                    (failedFieldJavaPath) -> BODY,
                     (failedFieldJavaPath) -> reflectionTools.toJsonPath(pe.getMethodParameter().getParameterType(), failedFieldJavaPath)
                 );
                 errors.addAll(fromParameterErrors(bodyRequestGenerators, pe, locale));
@@ -301,7 +312,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void requestPart(RequestPart ann, ParameterErrors pe) {
                 final var bodyPartGenerators = new MethodArgumentGenerators(
-                    (failedFieldJavaPath) -> "part",
+                    (failedFieldJavaPath) -> PART,
                     (failedFieldJavaPath) -> failedFieldJavaPath
                 );
                 errors.addAll(fromParameterErrors(bodyPartGenerators, pe, locale));
@@ -310,7 +321,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             @Override
             public void other(ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    "parameter",
+                    PARAMETER,
                     javaParamNameFallback(r),
                     r,
                     locale
@@ -332,7 +343,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
         // optional custom fields
         final Map<String, Object> errorDetails = ErrorDetail.builder()
-            .in("part")
+            .in(PART)
             .name(exception.getRequestPartName())
             .path(exception.getRequestPartName())
             .message("Required part is not present.")
@@ -346,7 +357,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
     }
 
     private List<Map<String, Object>> fromValidationResult(
-        String in,
+        In in,
         String httpName,
         ParameterValidationResult r,
         Locale locale) {
@@ -390,7 +401,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
             final String javaPath = fe.getField().toString();
             final String requestPath = generators.path.apply(javaPath);
             final String name = stringTools.lastSegment(requestPath, '.');
-            final String in = generators.in.apply(javaPath);
+            final In in = generators.in.apply(javaPath);
 
             out.add(
                 ErrorDetail.builder()
@@ -410,7 +421,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
 
             out.add(
                 ErrorDetail.builder()
-                    .in("dummy")                                        // TODO cannot be like this
+                    .in(DUMMY)                                        // TODO cannot be like this
                     .name(pe.getObjectName())
                     .path(pe.getObjectName())
                     .rejectedValue(null)                                // TODO probably can be supplied

@@ -1,6 +1,7 @@
 package online.itlab.springframework.validation.errors.standard.factory.tools;
 
 import jakarta.servlet.http.HttpServletRequest;
+import online.itlab.springframework.validation.errors.standard.factory.domain.types.In;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
@@ -15,11 +16,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.HEADER;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.MULTI;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PATH;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.QUERY;
+
 public final class WebRequestTools implements IWebRequestTools {
 
-    public String resolveSource(final WebRequest webRequest,
-                                       final Field field,
-                                       final String requestName
+    public In resolveSource(final WebRequest webRequest,
+                            final Field field,
+                            final String requestName
     ) {
         Objects.requireNonNull(webRequest, "req must not be null");
         Objects.requireNonNull(requestName, "requestName must not be null");
@@ -33,14 +39,14 @@ public final class WebRequestTools implements IWebRequestTools {
                 servletWebRequest.getNativeRequest(MultipartHttpServletRequest.class);
 
             if (multipartRequest != null && multipartRequest.getFile(requestName) != null) {
-                return "multi";
+                return MULTI;
             }
         }
 
         // 2) Request parameters win over path variables and headers.
         // In Servlet API this includes query params and form fields.
         if (servletWebRequest.getParameter(requestName) != null) {
-            return "query";
+            return QUERY;
         }
 
         final HttpServletRequest request = asHttpServletRequest(servletWebRequest);
@@ -48,13 +54,13 @@ public final class WebRequestTools implements IWebRequestTools {
         // 3) Path variables are exposed as a request attribute map.
         Map<String, String> pathVariables = getPathVariables(request);
         if (pathVariables.containsKey(requestName)) {
-            return "path";
+            return PATH;
         }
 
         // 4) Headers are considered last, and Spring strips dashes from header names
         // when binding onto @ModelAttribute properties.
         if (hasBindableHeader(request, requestName)) {
-            return "header";
+            return HEADER;
         }
 
         return null;
