@@ -44,7 +44,7 @@ import static online.itlab.springframework.validation.errors.standard.factory.do
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.DUMMY;
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.HEADER;
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.MATRIX;
-import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PARAMETER;
+import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.INTERNAL;
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PART;
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.PATH;
 import static online.itlab.springframework.validation.errors.standard.factory.domain.types.In.QUERY;
@@ -182,7 +182,7 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
         } else {
             // TODO is this a valid logic ? - can it be even reached? - evaluate
             return new MethodArgumentGenerators(
-                (failedFieldJavaPath) -> PARAMETER,
+                (failedFieldJavaPath) -> UNKNOWN,
                 (failedFieldJavaPath) -> failedFieldJavaPath
             );
         }
@@ -318,10 +318,12 @@ public class JakartaValidationProblemDetailFactory implements IJakartaValidation
                 errors.addAll(fromParameterErrors(bodyPartGenerators, pe, locale));
             }
 
+            // public String readSimple(@SessionAttribute("name") @NotBlank String name) {}
+            // public Employee readObject(@SessionAttribute("employee") @NotNull @Valid Employee employee) {}   <- @NotNull needed
             @Override
             public void other(ParameterValidationResult r) {
                 errors.addAll(fromValidationResult(
-                    PARAMETER,
+                    INTERNAL,
                     javaParamNameFallback(r),
                     r,
                     locale

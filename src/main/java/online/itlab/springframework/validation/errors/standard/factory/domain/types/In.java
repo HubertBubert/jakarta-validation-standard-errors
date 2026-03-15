@@ -7,12 +7,12 @@ public enum In {
     HEADER("header"),
     COOKIE("cookie"),
     BODY("body"),
+    INTERNAL("internal"),
     // problematic types to be investigated
     MULTI("multi"),         // no tests
     PART("part"),           // investigate implementation PART vs MULTI
     DUMMY("dummy"),         // replace proper logic - no tests
-    UNKNOWN("unknown"),         // probably used incorrectly - investigate usage logic - no tests
-    PARAMETER("parameter");     // used but this logic has not been tested - write tests and evaluate value
+    UNKNOWN("unknown");         // probably used incorrectly - investigate usage logic - no tests
 
     public final String value;
 
